@@ -13637,7 +13637,7 @@
 											"top": 1878,
 											"width": 166.1279296875,
 											"height": 13,
-											"text": "+Sdetails",
+											"text": "+Sdetails: String",
 											"horizontalAlignment": 0
 										}
 									],
@@ -20287,7 +20287,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhuYgRA+tAmAM="
 									},
-									"name": "Integer revenue"
+									"name": "Integer revenue",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -21611,7 +21612,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvBvsHBjwqk4="
 									},
-									"name": "String idEntry"
+									"name": "String idEntry",
+									"type": ""
 								}
 							]
 						},
@@ -21629,7 +21631,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvBvvVBmzg+8="
 									},
-									"name": "Date date"
+									"name": "Date date",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -21637,7 +21640,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvBvvVBmzg+8="
 									},
-									"name": "String idEntry"
+									"name": "String idEntry",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -21645,7 +21649,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvBvvVBmzg+8="
 									},
-									"name": "String itemID"
+									"name": "String itemID",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -21653,7 +21658,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvBvvVBmzg+8="
 									},
-									"name": "String itemName..."
+									"name": "String itemName...",
+									"type": ""
 								}
 							]
 						},
@@ -21671,7 +21677,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvBvzkxp2oqI="
 									},
-									"name": "String idEntry"
+									"name": "String idEntry",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -22283,7 +22290,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhzcZs28CYqoA="
 									},
-									"name": "Order order"
+									"name": "Order order",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -22310,7 +22318,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhzcZ2ocGsgLs="
 									},
-									"name": "Order order"
+									"name": "Order order",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24717,7 +24726,7 @@
 								"$ref": "AAAAAAGhufiiV63AO8Y="
 							},
 							"name": "Sdetails",
-							"type": ""
+							"type": "String"
 						}
 					]
 				},
