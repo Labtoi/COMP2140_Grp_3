@@ -11666,7 +11666,7 @@
 											"top": 1591,
 											"width": 487,
 											"height": 13,
-											"text": "+GetSPrepByID(sideName, SPrep sprep[*]): sprep",
+											"text": "+GetSPrep(sideName, SPrep sprep[*]): sprep",
 											"horizontalAlignment": 0
 										},
 										{
@@ -19452,7 +19452,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhzdI1+zU97OY="
 									},
-									"name": "Order order"
+									"name": "Order order",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -19480,7 +19481,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhzdI7CzZRseo="
 									},
-									"name": "Order order"
+									"name": "Order order",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -21742,7 +21744,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhu/csLIhko+Q="
 									},
-									"name": "Date date"
+									"name": "Date date",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -21750,7 +21753,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhu/csLIhko+Q="
 									},
-									"name": "String itemID"
+									"name": "String itemID",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -21758,7 +21762,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhu/csLIhko+Q="
 									},
-									"name": "String itemName"
+									"name": "String itemName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -21766,7 +21771,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhu/csLIhko+Q="
 									},
-									"name": "double quantity"
+									"name": "double quantity",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -21774,7 +21780,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhu/csLIhko+Q="
 									},
-									"name": "String type..."
+									"name": "String type...",
+									"type": ""
 								}
 							]
 						},
@@ -22387,7 +22394,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhzcKbG31XiLc="
 									},
-									"name": "Date date"
+									"name": "Date date",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -22395,7 +22403,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhzcKbG31XiLc="
 									},
-									"name": "String idEntry"
+									"name": "String idEntry",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -22403,7 +22412,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhzcKbG31XiLc="
 									},
-									"name": "Meal[*]"
+									"name": "Meal[*]",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -22411,7 +22421,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhzcKbG31XiLc="
 									},
-									"name": "Side[*]..."
+									"name": "Side[*]...",
+									"type": ""
 								}
 							]
 						}
@@ -22533,7 +22544,8 @@
 							"_parent": {
 								"$ref": "AAAAAAGhucSi72JRzfc="
 							},
-							"name": "Meal meal"
+							"name": "Meal meal",
+							"type": ""
 						},
 						{
 							"_type": "UMLAttribute",
@@ -22541,7 +22553,8 @@
 							"_parent": {
 								"$ref": "AAAAAAGhucSi72JRzfc="
 							},
-							"name": "Side side"
+							"name": "Side side",
+							"type": ""
 						},
 						{
 							"_type": "UMLAttribute",
@@ -22653,7 +22666,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhzcZs28CYqoA="
 									},
-									"name": "Order order"
+									"name": "Order order",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -22681,7 +22695,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhzcZ2ocGsgLs="
 									},
-									"name": "Order order"
+									"name": "Order order",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23263,7 +23278,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMy6m4Pa1M8="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23271,7 +23287,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMy6m4Pa1M8="
 									},
-									"name": "Double mealCost..."
+									"name": "Double mealCost...",
+									"type": ""
 								}
 							]
 						},
@@ -23289,7 +23306,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMy9WoS4oM8="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23297,7 +23315,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMy9WoS4oM8="
 									},
-									"name": "Double sideCost..."
+									"name": "Double sideCost...",
+									"type": ""
 								}
 							]
 						},
@@ -23315,7 +23334,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMzAM4WWOVs="
 									},
-									"name": "String menuName"
+									"name": "String menuName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23323,7 +23343,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMzAM4WWOVs="
 									},
-									"name": "meal[*]"
+									"name": "meal[*]",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23350,7 +23371,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMzC8oZ06Wc="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23358,7 +23380,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMzC8oZ06Wc="
 									},
-									"name": "side[*]"
+									"name": "side[*]",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23425,7 +23448,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMzLookOAbE="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								}
 							]
 						},
@@ -23443,7 +23467,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMzPcons7BM="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								}
 							]
 						},
@@ -23499,7 +23524,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMzXqoyGlqA="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								}
 							]
 						},
@@ -23517,7 +23543,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMza+41kqfI="
 									},
-									"name": "String sideIName"
+									"name": "String sideIName",
+									"type": ""
 								}
 							]
 						},
@@ -23535,7 +23562,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNwm3CjsLk0="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23543,7 +23571,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNwm3CjsLk0="
 									},
-									"name": "String itemName..."
+									"name": "String itemName...",
+									"type": ""
 								}
 							]
 						},
@@ -23561,7 +23590,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNwp4ynKvuY="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23569,7 +23599,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNwp4ynKvuY="
 									},
-									"name": "String sideItemName..."
+									"name": "String sideItemName...",
+									"type": ""
 								}
 							]
 						},
@@ -23587,7 +23618,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNwsyyqoCy0="
 									},
-									"name": "mealName"
+									"name": "mealName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23595,7 +23627,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNwsyyqoCy0="
 									},
-									"name": "Prep prep[*]"
+									"name": "Prep prep[*]",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23622,7 +23655,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNwvlCuGvxY="
 									},
-									"name": "sideName"
+									"name": "sideName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23630,7 +23664,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNwvlCuGvxY="
 									},
-									"name": "SPrep sprep[*]"
+									"name": "SPrep sprep[*]",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23697,7 +23732,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNw3+y4ghrA="
 									},
-									"name": "mealName"
+									"name": "mealName",
+									"type": ""
 								}
 							]
 						},
@@ -23715,7 +23751,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNw7Iy7+zxs="
 									},
-									"name": "mealName"
+									"name": "mealName",
+									"type": ""
 								}
 							]
 						},
@@ -23771,7 +23808,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNxENDGYus8="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								}
 							]
 						},
@@ -23789,7 +23827,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNxHVDJ2rgs="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								}
 							]
 						}
@@ -23817,7 +23856,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvPytLRDqXUc="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23825,7 +23865,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvPytLRDqXUc="
 									},
-									"name": "String itemName..."
+									"name": "String itemName...",
+									"type": ""
 								}
 							]
 						},
@@ -23852,7 +23893,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvJDQYqxa0iI="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23860,7 +23902,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvJDQYqxa0iI="
 									},
-									"name": "Prep prep[*]"
+									"name": "Prep prep[*]",
+									"type": ""
 								}
 							]
 						},
@@ -23898,7 +23941,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvJ0+yz8SF48="
 									},
-									"name": "mealName"
+									"name": "mealName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23906,7 +23950,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvJ0+yz8SF48="
 									},
-									"name": "Prep prep"
+									"name": "Prep prep",
+									"type": ""
 								}
 							]
 						},
@@ -23943,7 +23988,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvJ4ZZUbKlB4="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								}
 							]
 						},
@@ -23961,7 +24007,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNdd5N8WEXc="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -23969,7 +24016,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNdd5N8WEXc="
 									},
-									"name": "String sideItemName..."
+									"name": "String sideItemName...",
+									"type": ""
 								}
 							]
 						},
@@ -23979,7 +24027,7 @@
 							"_parent": {
 								"$ref": "AAAAAAGhufZJCkyPZAk="
 							},
-							"name": "GetSPrepByID",
+							"name": "GetSPrep",
 							"parameters": [
 								{
 									"_type": "UMLParameter",
@@ -24042,7 +24090,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNnmU/tziww="
 									},
-									"name": "sideName"
+									"name": "sideName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24050,7 +24099,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNnmU/tziww="
 									},
-									"name": "SPrep sprep"
+									"name": "SPrep sprep",
+									"type": ""
 								}
 							]
 						},
@@ -24087,7 +24137,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyNr4ewUKtCs="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								}
 							]
 						}
@@ -24155,7 +24206,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyOQhw68dQm4="
 									},
-									"name": "String menuName"
+									"name": "String menuName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24163,7 +24215,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyOQhw68dQm4="
 									},
-									"name": "Meal meal[*]"
+									"name": "Meal meal[*]",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24190,7 +24243,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyORRk7JaRJ8="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24198,7 +24252,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyORRk7JaRJ8="
 									},
-									"name": "Side side[*]"
+									"name": "Side side[*]",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24310,7 +24365,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvOMtD11DZxE="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24318,7 +24374,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvOMtD11DZxE="
 									},
-									"name": "Double mealCost..."
+									"name": "Double mealCost...",
+									"type": ""
 								}
 							]
 						},
@@ -24336,7 +24393,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyLQC8YkYprk="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24344,7 +24402,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyLQC8YkYprk="
 									},
-									"name": "Double sideCost..."
+									"name": "Double sideCost...",
+									"type": ""
 								}
 							]
 						},
@@ -24362,7 +24421,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvPX8WuFhP8Y="
 									},
-									"name": "String menuName"
+									"name": "String menuName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24370,7 +24430,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvPX8WuFhP8Y="
 									},
-									"name": "Meal meal[*]"
+									"name": "Meal meal[*]",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24397,7 +24458,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMLzWjVWMEM="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24405,7 +24467,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMLzWjVWMEM="
 									},
-									"name": "Side side[*]"
+									"name": "Side side[*]",
+									"type": ""
 								},
 								{
 									"_type": "UMLParameter",
@@ -24472,7 +24535,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvJqt1CSCGjs="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								}
 							]
 						},
@@ -24490,7 +24554,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMpoYmbzRDo="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								}
 							]
 						},
@@ -24546,7 +24611,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhvJyQAzb9Uho="
 									},
-									"name": "String mealName"
+									"name": "String mealName",
+									"type": ""
 								}
 							]
 						},
@@ -24564,7 +24630,8 @@
 									"_parent": {
 										"$ref": "AAAAAAGhyMr6MmvHNkE="
 									},
-									"name": "String sideName"
+									"name": "String sideName",
+									"type": ""
 								}
 							]
 						}
