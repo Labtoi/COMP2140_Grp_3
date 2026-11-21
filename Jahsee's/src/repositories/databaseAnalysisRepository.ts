@@ -25,6 +25,11 @@ export class databaseAnalysisRepository implements IAnalysisRepo {
     return result.rows.map((r) => this.toAnalysis(r));
   }
 
+  async GetAllIDs(): Promise<string[]> {
+    const result = await this.pool.query(`SELECT id FROM ${TABLE} ORDER BY date DESC`);
+    return result.rows.map((r) => r.id);
+  }
+
   async GetAnalysis(id: string): Promise<Analysis | null> {
     const result = await this.pool.query(`SELECT * FROM ${TABLE} WHERE id = $1`, [id]);
     return result.rows[0] ? this.toAnalysis(result.rows[0]) : null;
