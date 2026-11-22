@@ -81,11 +81,70 @@ async function listAll() {
   await listSpecific(all);
 }
 
+async function showPopular() {
+  const range = {
+    start: await ask('Start date (YYYY-MM-DD): '),
+    end: await ask('End date (YYYY-MM-DD): '),
+  };
+  while (true) {
+    try {
+      console.log('\n--------------------------------');
+      const choice = await askNumber(`1)Most Popular Meals  2)Least Popular Meals  3)Most Popular Sides  4)Least Popular Sides 5)Exit> `);
+      if (choice === 1) {
+        const report = await stock.mostPopularMeals(range);
+        if (report.length === 0) return console.log('No meals sold in that range.\n');
+        console.log('\nTop meals:');
+        report.forEach((m, i) => console.log(`  ${i + 1}. ${m.name} - ${m.quantitySold} sold`));
+      }
+      else if (choice === 2) {
+        const report = await stock.leastPopularMeals(range);
+        if (report.length === 0) return console.log('No meals sold in that range.\n');
+        console.log('\nLeast popular meals:');
+        report.forEach((m, i) => console.log(`  ${i + 1}. ${m.name} - ${m.quantitySold} sold`));
+      }
+      else if (choice === 3) {
+        const report = await stock.mostPopularSides(range);
+        if (report.length === 0) return console.log('No sides sold in that range.\n');
+        console.log('\nTop sides:');
+        report.forEach((m, i) => console.log(`  ${i + 1}. ${m.name} - ${m.quantitySold} sold`));
+      }
+      else if (choice === 4) {
+        const report = await stock.leastPopularSides(range);
+        if (report.length === 0) return console.log('No sides sold in that range.\n');
+        console.log('\nLeast popular sides:');
+        report.forEach((m, i) => console.log(`  ${i + 1}. ${m.name} - ${m.quantitySold} sold`));
+      }
+      else if (choice === 5) return;
+    } catch (e) {
+      if (e instanceof ValidationError) console.log(`Not shown: ${e.message}\n`);
+      else throw e;
+    }
+  }
+}
+
+async function totalSales() {
+  const range = {
+    start: await ask('Start date (YYYY-MM-DD): '),
+    end: await ask('End date (YYYY-MM-DD): '),
+  };
+  try{
+    const totalMeals = await stock.totalMealsSold(range);
+    const totalSides = await stock.totalSidesSold(range);
+    const totalRevenue = await stock.getTotalRevenue(range);
+    console.log(`\nTotal meals sold: ${totalMeals}`);
+    console.log(`Total sides sold: ${totalSides}`);
+    console.log(`Total revenue: $${totalRevenue}`);
+  }
+  catch (e) {
+    if (e instanceof ValidationError) console.log(`Not shown: ${e.message}\n`);
+    else throw e;
+  }
+}
 async function main() {
   while (true) {
     console.clear();
     console.log('\nTesting purposes only "1" !')
-    const choice = await ask('1)Add  2)List  3)Get Specific Analysis  4)Remove  5)Quit > ');
+    const choice = await ask('1)Add  2)List  3)Get Specific Analysis  4)showPopular 5)totalSales  6)Remove  7)Quit > ');
     
     if (choice === '1') {await addToDatabase(); await pause();}
         
@@ -102,8 +161,15 @@ async function main() {
         console.log('ID not found. Nothing to show.'); await pause();
       }      
     }
-
     else if (choice === '4') {
+      await showPopular();
+      await pause();
+    }
+    else if (choice === '5') {
+      await totalSales();
+      await pause();
+    }
+    else if (choice === '6') {
       console.log('Existing IDs:', (await stock.getAllIds()).join(', '));
       const id = await ask('ID to remove: ');
       if (await stock.idExists(id)) {
@@ -111,8 +177,7 @@ async function main() {
       } else {
         console.log('ID not found. Nothing removed.'); await pause();
       }
-
-    } else if (choice === '5') break;
+    } else if (choice === '7') break;
   }
   rl.close();
   await pool.end();

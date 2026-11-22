@@ -1,13 +1,12 @@
-import { Meal_A } from './Meal_A';
-import { Side_A } from './Side_A';
+import { Meal_SideA } from './Meal_SideA';
 
 export interface Analysis {
     id: string;
     date: string;
     revenue: number;
     totalSold: number;
-    meals: Meal_A[];
-    sides: Side_A[];
+    meals: Meal_SideA[];
+    sides: Meal_SideA[];
     mealsSold: number;
     sidesSold: number;
 }
