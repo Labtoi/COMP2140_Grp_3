@@ -21,12 +21,12 @@ export class databaseAnalysisRepository implements IAnalysisRepo {
   }
 
   async GetAllAnalysis(): Promise<Analysis[]> {
-    const result = await this.pool.query(`SELECT * FROM ${TABLE} ORDER BY date DESC`);
+    const result = await this.pool.query(`SELECT * FROM ${TABLE} ORDER BY date ASC`);
     return result.rows.map((r) => this.toAnalysis(r));
   }
 
   async GetAllIDs(): Promise<string[]> {
-    const result = await this.pool.query(`SELECT id FROM ${TABLE} ORDER BY date DESC`);
+    const result = await this.pool.query(`SELECT id FROM ${TABLE} ORDER BY date ASC`);
     return result.rows.map((r) => r.id);
   }
 
