@@ -25,9 +25,6 @@ export class StockAnalysis {
   }
 
   async add(input: AnalysisInput): Promise<Analysis> {
-    //if (await this.idExists(input.id)) {
-      //throw new ValidationError(`id "${input.id}" already exists`);
-    //}
     return this.repo.AddAnalysis(input);
   }
 
@@ -53,7 +50,5 @@ export class StockAnalysis {
 
   remove(id: string): Promise<void> {
     return this.repo.RemoveAnalysis(id);
-  }
-
-  
+  } 
 }

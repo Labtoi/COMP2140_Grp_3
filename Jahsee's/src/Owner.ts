@@ -36,7 +36,7 @@ async function addToDatabase() {
 
     const draft = {
       id,
-      date: new Date().toLocaleDateString('en-CA'),
+      date: new Date().toLocaleDateString('sv-SE'),
       meals: parseItems(await ask('Meals (name:price:qty, ...): ')),
       sides: parseItems(await ask('Sides (name:price:qty, ...): ')),
     };
