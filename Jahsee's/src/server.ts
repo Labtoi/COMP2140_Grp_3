@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const repo: IAnalysisRepo = new databaseAnalysisRepository(pool);
-const stockAnalysis: new StockAnalysis(repo);
+const stockAnalysis = new StockAnalysis(repo);
 
 app.use(express.json());
 app.use('/', createRouter(stockAnalysis));

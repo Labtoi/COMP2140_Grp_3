@@ -10,33 +10,30 @@ const rl = createInterface({ input: process.stdin, output: process.stdout });
 const ask = async (q: string) => (await rl.question(q)).trim();
 const askNumber = async (q: string) => Number(await ask(q));
 
-// typed like:  Jerk Chicken:1500, Curry Goat:1800
+
+// typed like:  Jerk Chicken:1500:8, Curry Goat:1800:4
 function parseItems(text: string) {
   return text
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
     .map((s) => {
-      const [name, price] = s.split(':');
-      return { name: name.trim(), price: Number(price) };
+      const [name, price, quantity] = s.split(':');
+      return { name: name.trim(), price: Number(price), quantity: Number(quantity) };
     });
 }
 
 async function addToDatabase() {
   while (true) {
-    const analysis = {
+    const draft = {
       id: await ask('ID: '),
-      date: await ask('Date (YYYY-MM-DD): '),
-      revenue: await askNumber('Revenue: '),
-      totalSold: await askNumber('Total sold: '),
-      meals: parseItems(await ask('Meals (name:price, name:price): ')),
-      sides: parseItems(await ask('Sides (name:price, name:price): ')),
-      mealsSold: await askNumber('Meals sold: '),
-      sidesSold: await askNumber('Sides sold: '),
+      date: new Date().toLocaleDateString('en-CA'),
+      meals: parseItems(await ask('Meals (name:price:qty, ...): ')),
+      sides: parseItems(await ask('Sides (name:price:qty, ...): ')),
     };
     try {
-      await stock.add(analysis);
-      console.log('Saved.\n');
+      const saved = await stock.addFromItems(draft);
+      console.log(`Saved. Total sold: ${saved.totalSold}, revenue: ${saved.revenue}\n`);
       return;
     } catch (e) {
       if (e instanceof ValidationError) console.log(`Not saved: ${e.message}. Try again.\n`);
@@ -58,5 +55,5 @@ async function main() {
   rl.close();
   await pool.end();
 }
-
+ 
 main();
