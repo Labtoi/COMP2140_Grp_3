@@ -10,10 +10,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const repo: IAnalysisRepo = new databaseAnalysisRepository(pool);
-const StockAnalysis: new StockAnalysis(repo);
+const stockAnalysis: new StockAnalysis(repo);
 
 app.use(express.json());
-app.use('/', createRouter(StockAnalysis));
+app.use('/', createRouter(stockAnalysis));
 
 app.get('/health', async (_req, res) => {
   const result = await pool.query('SELECT NOW()');

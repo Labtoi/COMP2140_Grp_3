@@ -5,14 +5,15 @@ export class ValidationError extends Error {}
 
 export type AnalysisInput = Analysis;
 
-export class AnalysisService {
-  // The interface is injected through the constructor. No "new databaseAnalysisRepository" here.
+export class StockAnalysis {
   constructor(private readonly repo: IAnalysisRepo) {}
-
-  ids = GetAllIDs();
 
   getAll(): Promise<Analysis[]> {
     return this.repo.GetAllAnalysis();
+  }
+
+  getAllIds(): Promise<string[]> {
+    return this.repo.GetAllIDs();
   }
 
   getById(id: string): Promise<Analysis | null> {
@@ -21,23 +22,10 @@ export class AnalysisService {
 
   async add(input: AnalysisInput): Promise<Analysis> {
     this.validate(input);
-    // the service generates the id, so callers can't choose or overwrite it
-    return this.repo.AddAnalysis();
-  }
-
-  addToDatabase(){
-    while (input = id){
-      AnalysisInput.id = input("Enter the ID, enter a new id if it already exists")
+    if (await this.repo.GetAnalysis(input.id)) {
+      throw new ValidationError(`id "${input.id}" already exists`);
     }
-    while (!validate){
-      AnalysisInput.revenue = input("Enter a positive revenue: ")
-      AnalysisInput.total_sold = input("Enter the total sold: ")
-      AnalysisInput.meals = input("Enter meals:").split(",")
-      AnalysisInput.sides = input("Enter sides:").split(",")
-      AnalysisInput.mealsSold = input("Enter the amount of meals sold: ")
-      AnalysisInput.sidesSold = input("Enter the amount of sides sold: ")
-    }
-    add(AnalysisInput)
+    return this.repo.AddAnalysis(input);
   }
 
   remove(id: string): Promise<void> {
@@ -45,6 +33,7 @@ export class AnalysisService {
   }
 
   private validate(a: AnalysisInput): void {
+    if (!a.id) throw new ValidationError('id is required');
     if (!a.date) throw new ValidationError('date is required');
     const numbers = [a.revenue, a.totalSold, a.mealsSold, a.sidesSold];
     if (numbers.some((n) => typeof n !== 'number' || Number.isNaN(n) || n < 0)) {
