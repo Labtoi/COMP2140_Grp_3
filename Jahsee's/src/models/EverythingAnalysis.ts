@@ -1,4 +1,11 @@
-import { Meal_SideA } from './Meal_SideA';
+export interface DateRange { start: string; end: string }   // "YYYY-MM-DD"
+export interface ItemSales { name: string; quantitySold: number }
+
+export interface Meal_SideA {
+    name: string;
+    price: number;
+    quantity: number;
+}
 
 export interface Analysis {
     id: string;

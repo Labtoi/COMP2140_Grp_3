@@ -2,7 +2,8 @@ import { createInterface } from 'readline/promises';
 import pool from './config/postgres';
 import { databaseAnalysisRepository } from './repositories/databaseAnalysisRepository';
 import { StockAnalysis, ValidationError } from './mainClasses/StockAnalysis';
-import { Analysis } from './models/Analysis';
+import { Analysis } from './models/EverythingAnalysis';
+import { DateRange } from './models/EverythingAnalysis';
 
 // same wiring as server.ts: the interface is satisfied by the database repository
 const stock = new StockAnalysis(new databaseAnalysisRepository(pool));
@@ -76,6 +77,55 @@ async function listSpecific(analysis: Analysis[]) {
   console.log('\n----------------------------------------\n');
 }
 
+function checkRange(range: DateRange) : boolean {
+  const updatedYear = new Date().getFullYear();
+  const updatedMonth = new Date().getMonth() + 1; // getMonth() returns 0-11, so add 1 for 1-12
+  const updatedDay = new Date().getDate();
+
+  const parts = [...range.start.split('-'), ...range.end.split('-')];
+  const areAllNumbers = parts.every((part) => part.trim() !== '' && Number.isInteger(Number(part)));
+  if (!areAllNumbers) {
+    console.log('Invalid date format. Please use Numbers with - for YYYY-MM-DD.\n');
+    return false;
+  }
+
+  const startLength = range.start.split('-').length;
+  const endLength = range.end.split('-').length;
+  if (startLength !== 3 || endLength !== 3) {
+    console.log('Invalid date format. Please use YYYY-MM-DD, parts are missing.\n');
+    return false;
+  }
+
+  if (range.start > range.end) {
+    console.log('Start date must not be after end date.');
+    return false;
+  }
+
+  const year1 = Number(range.start.split('-')[0]);
+  const year2 = Number(range.end.split('-')[0]);
+  if (year1 > updatedYear || year2 > updatedYear) {
+    console.log(`Start and end dates must not be after ${updatedYear}.\n`);
+    return false;
+  }
+
+  const month1 = Number(range.start.split('-')[1]);
+  const month2 = Number(range.end.split('-')[1]);
+  if (month1<1 || month1>12 || month2<1 || month2>12 
+    || month1>updatedMonth || month2>updatedMonth) {
+    console.log('Start and end date months must be between 1 and 12.\n');
+    return false;
+  }
+
+  const day1 = Number(range.start.split('-')[2]);
+  const day2 = Number(range.end.split('-')[2]);
+  if (day1<1 || day1>31 || day2<1 || day2>31 
+    || day1>updatedDay || day2>updatedDay) {
+    console.log('Start and end date days must be between 1 and 31.\n');
+    return false;
+  }
+  return true;
+}
+
 async function listAll() {
   const all = await stock.getAll();
   await listSpecific(all);
@@ -86,6 +136,8 @@ async function showPopular() {
     start: await ask('Start date (YYYY-MM-DD): '),
     end: await ask('End date (YYYY-MM-DD): '),
   };
+  if (!checkRange(range)) return;
+ 
   while (true) {
     try {
       console.log('\n--------------------------------');
@@ -127,6 +179,8 @@ async function totalSales() {
     start: await ask('Start date (YYYY-MM-DD): '),
     end: await ask('End date (YYYY-MM-DD): '),
   };
+  if (!checkRange(range)) return;
+
   try{
     const totalMeals = await stock.totalMealsSold(range);
     const totalSides = await stock.totalSidesSold(range);

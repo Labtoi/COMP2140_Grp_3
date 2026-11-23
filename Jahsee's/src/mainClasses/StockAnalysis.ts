@@ -1,6 +1,6 @@
 import { IAnalysisRepo } from '../interfaces/IAnalysisRepo';
-import { Analysis } from '../models/Analysis';
-import { DateRange, ItemSales } from '../models/ForReport';
+import { Analysis } from '../models/EverythingAnalysis';
+import { DateRange, ItemSales } from '../models/EverythingAnalysis';
 
 export class ValidationError extends Error {}
 export type AnalysisDraft = Pick<Analysis, 'id' | 'date' | 'meals' | 'sides'>;

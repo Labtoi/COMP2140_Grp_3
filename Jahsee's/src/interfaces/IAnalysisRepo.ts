@@ -1,5 +1,5 @@
-import { Analysis, NewAnalysis } from '../models/Analysis'
-import { DateRange, ItemSales } from '../models/ForReport';
+import { Analysis, NewAnalysis } from '../models/EverythingAnalysis';
+import { DateRange, ItemSales } from '../models/EverythingAnalysis';
 
 export interface IAnalysisRepo {
     GetAnalysis(id: string): Promise< Analysis| null>;

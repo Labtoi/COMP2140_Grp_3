@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import { IAnalysisRepo } from '../interfaces/IAnalysisRepo';
-import { Analysis, NewAnalysis } from '../models/Analysis';
-import { DateRange, ItemSales } from '../models/ForReport';
+import { Analysis, NewAnalysis } from '../models/EverythingAnalysis';
+import { DateRange, ItemSales } from '../models/EverythingAnalysis';
 
 const TABLE = '"DatabaseA"';
 // Includes the whole end day. Without this, "2026-11-21" means midnight and
