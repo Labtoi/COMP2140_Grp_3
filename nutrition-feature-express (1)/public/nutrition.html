@@ -21,7 +21,10 @@
     .chip { background: #fff1dc; color: #9a4a00; border: 1px solid #9a4a00; border-radius: 99px; padding: .1rem .6rem; margin-right: .3rem; }
     form { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: 1rem; }
     form label { display: grid; gap: .2rem; font-size: .9rem; }
-    form .full { grid-column: span 2; display: flex; gap: .5rem; }
+    form .full { grid-column: span 2; }
+    fieldset.full { display: flex; flex-wrap: wrap; gap: .3rem 1rem; }
+    fieldset label { display: flex; align-items: center; gap: .3rem; }
+    .buttons { display: flex; gap: .5rem; }
     #msg.err { color: #b3261e; }
   </style>
 </head>
@@ -45,27 +48,27 @@
       <div class="label">
         <h2 id="title">Select an item</h2>
         <p id="sub"></p>
-        <label id="weightRow" hidden>Portion in grams <input id="weight" type="number" min="1" step="1"></label>
+        <label id="weightRow" hidden>Portion in grams <input id="weight" type="number" min="1" step="1" value="100"></label>
         <div id="facts"></div>
         <div id="allergens"></div>
       </div>
 
       <form id="form" hidden>
         <label>Type <select id="f-kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
-        <label>Name <input id="f-name" required></label>
+        <label>Name <input id="f-name"></label>
         <label>Details <input id="f-details"></label>
         <label>Price (J$) <input id="f-price" type="number" min="0" step="0.01" value="0"></label>
-        <label>Serving weight (g) <input id="f-weight" type="number" min="1" required></label>
-        <label>Calories per 100 g <input id="f-cal" type="number" min="0" step="any" required></label>
-        <label>Protein per 100 g (g) <input id="f-pro" type="number" min="0" step="any" required></label>
-        <label>Carbohydrates per 100 g (g) <input id="f-carb" type="number" min="0" step="any" required></label>
-        <label>Fat per 100 g (g) <input id="f-fat" type="number" min="0" step="any" required></label>
-        <label>Sodium per 100 g (mg) <input id="f-sod" type="number" min="0" step="any" required></label>
-        <label>Vitamins <input id="f-vit"></label>
-        <label class="full" style="display:grid">Allergens, separated by commas <input id="f-all"></label>
-        <div class="full">
+        <p class="full" style="margin:.5rem 0 0">Nutrition per 100 g. Fill in all six, or leave all six empty to save allergens only.</p>
+        <label>Calories <input id="f-calories" type="number" min="0" step="any"></label>
+        <label>Protein (g) <input id="f-protein" type="number" min="0" step="any"></label>
+        <label>Carbohydrates (g) <input id="f-carbohydrates" type="number" min="0" step="any"></label>
+        <label>Fat (g) <input id="f-fats" type="number" min="0" step="any"></label>
+        <label>Sodium (mg) <input id="f-sodium" type="number" min="0" step="any"></label>
+        <label>Vitamins <input id="f-vitamins" type="number" min="0" step="any"></label>
+        <fieldset class="full" id="f-allergens"><legend>Allergens</legend></fieldset>
+        <div class="full buttons">
           <button type="submit" id="saveBtn">Save</button>
-          <button type="button" id="removeBtn" hidden>Remove nutrition</button>
+          <button type="button" id="removeBtn" hidden>Remove nutrition and allergens</button>
         </div>
       </form>
       <p id="msg" role="status"></p>
@@ -74,6 +77,8 @@
 
   <script>
     const $ = (id) => document.getElementById(id);
+    const NUM = ['calories', 'protein', 'carbohydrates', 'fats', 'sodium', 'vitamins'];
+    const ALLERGENS = ['gluten', 'dairy', 'eggs', 'peanuts', 'tree_nuts', 'soy', 'fish', 'shellfish', 'sesame'];
     let kind = 'meal', current = null, creating = false;
 
     // Chef mode only sends a placeholder header. Real login replaces this later.
@@ -89,7 +94,9 @@
     }
 
     const say = (text, err = false) => { $('msg').textContent = text; $('msg').className = err ? 'err' : ''; };
-    const money = (c) => 'J$' + (c / 100).toFixed(2);
+    const money = (cents) => 'J$' + (cents / 100).toFixed(2);       // price is stored in cents (SRS QA-1)
+    const label = (a) => a.replace('_', ' ');
+    const hasData = (d) => NUM.some((k) => d[k] > 0);               // all zeros = no nutrition recorded
 
     function el(tag, cls, text) {
       const e = document.createElement(tag);
@@ -97,18 +104,25 @@
       if (text !== undefined) e.textContent = text;
       return e;
     }
-    function row(label, value, cls = 'row') {
+    function row(name, value, cls = 'row') {
       const d = el('div', cls);
-      d.append(el('span', '', label), el('span', '', String(value)));
+      d.append(el('span', '', name), el('span', '', String(value)));
       return d;
     }
+
+    // allergen checkboxes
+    for (const a of ALLERGENS) {
+      const l = el('label'); const cb = el('input'); cb.type = 'checkbox'; cb.value = a;
+      l.append(cb, label(a)); $('f-allergens').appendChild(l);
+    }
+    const checked = () => [...document.querySelectorAll('#f-allergens input:checked')].map((c) => c.value);
 
     async function loadList(selectName) {
       const items = await api('GET', '/Menu/' + kind);
       $('list').replaceChildren();
       for (const it of items) {
-        const b = el('button', it.name === (current && current.name) && current.kind === kind ? 'on' : '');
-        b.append(el('span', '', it.name), el('small', '', money(it.costCents)));
+        const b = el('button', current && it.name === current.name ? 'on' : '');
+        b.append(el('span', '', it.name), el('small', '', money(it.price)));
         b.onclick = () => { say(''); choose(it); };
         $('list').appendChild(b);
         if (it.name === selectName) choose(it);
@@ -117,8 +131,7 @@
     }
 
     function choose(item) {
-      current = item; creating = false;
-      $('weight').value = item.nutrition ? item.nutrition.defaultWeightG : '';
+      current = item; creating = false; $('weight').value = 100;
       document.querySelectorAll('#list button').forEach((b) => b.classList.toggle('on', b.firstChild.textContent === item.name));
       showFacts(); fillForm();
     }
@@ -127,20 +140,20 @@
       $('facts').replaceChildren(); $('allergens').replaceChildren();
       if (!current) { $('title').textContent = 'Select an item'; $('sub').textContent = ''; $('weightRow').hidden = true; return; }
       $('title').textContent = current.name;
-      $('sub').textContent = (current.details || 'No description') + ', ' + money(current.costCents);
-      $('weightRow').hidden = !current.nutrition;
+      $('sub').textContent = (current.details || 'No description') + ', ' + money(current.price);
+      $('weightRow').hidden = !hasData(current);
       try {
         const w = $('weight').value;
-        const v = await api('GET', `/Nutrition/${current.kind}/${encodeURIComponent(current.name)}` + (w ? `?weight=${encodeURIComponent(w)}` : ''));
+        const v = await api('GET', `/Nutrition/${kind}/${encodeURIComponent(current.name)}` + (w ? `?weight=${encodeURIComponent(w)}` : ''));
         if (v.available) {
           $('facts').append(row('Calories', v.calories, 'cal'), row('Protein', v.proteinG + ' g'),
             row('Carbohydrates', v.carbohydratesG + ' g'), row('Fat', v.fatsG + ' g'),
-            row('Sodium', v.sodiumMg + ' mg'), row('Vitamins', v.vitamins || 'Not recorded'));
+            row('Sodium', v.sodiumMg + ' mg'), row('Vitamins', v.vitamins));
         } else {
           $('facts').appendChild(el('p', 'notice', v.message));
         }
         if (current.allergens.length) {
-          $('allergens').append('Contains: ', ...current.allergens.map((a) => el('span', 'chip', a)));
+          $('allergens').append('Contains: ', ...current.allergens.map((a) => el('span', 'chip', label(a))));
         } else {
           $('allergens').appendChild(el('p', 'notice', v.allergens));
         }
@@ -148,20 +161,19 @@
     }
 
     function fillForm() {
-      const isChef = $('chef').checked;
-      $('newBtn').hidden = !isChef;
-      $('form').hidden = !isChef || (!current && !creating);
+      const chef = $('chef').checked;
+      $('newBtn').hidden = !chef;
+      $('form').hidden = !chef || (!current && !creating);
       if ($('form').hidden) return;
-      const it = creating ? null : current, n = it && it.nutrition;
+      const it = creating ? null : current;
       const set = (id, v) => { $(id).value = v ?? ''; };
-      set('f-kind', it ? it.kind : kind); set('f-name', it && it.name); set('f-details', it && it.details);
-      set('f-price', it ? (it.costCents / 100).toFixed(2) : 0);
-      set('f-weight', n && n.defaultWeightG); set('f-cal', n && n.caloriesPer100g); set('f-pro', n && n.proteinPer100g);
-      set('f-carb', n && n.carbohydratesPer100g); set('f-fat', n && n.fatsPer100g); set('f-sod', n && n.sodiumMgPer100g);
-      set('f-vit', n && n.vitamins); set('f-all', it ? it.allergens.join(', ') : '');
+      set('f-kind', it ? kind : $('f-kind').value); set('f-name', it && it.name); set('f-details', it && it.details);
+      set('f-price', it ? (it.price / 100).toFixed(2) : 0);
+      for (const k of NUM) set('f-' + k, it && hasData(it) ? it[k] : '');
+      document.querySelectorAll('#f-allergens input').forEach((c) => { c.checked = !!it && it.allergens.includes(c.value); });
       for (const id of ['f-kind', 'f-name', 'f-details', 'f-price']) $(id).disabled = !creating;
-      $('removeBtn').hidden = !n;
-      $('saveBtn').textContent = creating ? 'Create item' : n ? 'Update nutrition' : 'Add nutrition';
+      $('removeBtn').hidden = !(it && (hasData(it) || it.allergens.length));
+      $('saveBtn').textContent = creating ? 'Create item' : 'Save changes';
     }
 
     document.querySelectorAll('[data-kind]').forEach((b) => b.onclick = () => {
@@ -174,32 +186,31 @@
 
     $('form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const g = (id) => $(id).value;
-      const nutrition = {
-        defaultWeightG: Number(g('f-weight')), caloriesPer100g: Number(g('f-cal')), proteinPer100g: Number(g('f-pro')),
-        carbohydratesPer100g: Number(g('f-carb')), fatsPer100g: Number(g('f-fat')), sodiumMgPer100g: Number(g('f-sod')),
-        vitamins: g('f-vit').trim(),
-      };
-      const allergens = g('f-all').split(',');
+      const values = NUM.map((k) => $('f-' + k).value);
+      const filled = values.filter((v) => v !== '').length;
+      if (filled !== 0 && filled !== NUM.length) return say('Fill in all six nutrition values, or leave all six empty.', true);
+      const nutrition = filled ? Object.fromEntries(NUM.map((k) => [k, Number($('f-' + k).value)])) : undefined;
+      const allergens = checked();
       try {
-        let k, name;
+        let name;
         if (creating) {
-          k = g('f-kind'); name = g('f-name').trim();
-          await api('POST', '/Menu', { kind: k, name, details: g('f-details').trim(), costCents: Math.round(Number(g('f-price')) * 100), allergens, nutrition });
+          kind = $('f-kind').value; name = $('f-name').value.trim();
+          await api('POST', '/Menu', { kind, name, details: $('f-details').value.trim(), price: Math.round(Number($('f-price').value) * 100), nutrition, allergens });
         } else if (current) {
-          k = current.kind; name = current.name;
-          await api(current.nutrition ? 'PUT' : 'POST', `/Nutrition/${k}/${encodeURIComponent(name)}`, { facts: nutrition, allergens });
+          name = current.name; const url = `/${nutrition ? 'Nutrition' : 'Allergens'}/${kind}/${encodeURIComponent(name)}`;
+          if (nutrition) await api(hasData(current) ? 'PUT' : 'POST', url, { facts: nutrition, allergens });
+          else await api('PUT', url, { allergens });
         } else return;
-        kind = k; creating = false; current = null;
+        creating = false; current = null;
         await loadList(name); say('Saved.');
       } catch (err) { say(err.message, true); }
     });
 
     $('removeBtn').addEventListener('click', async () => {
       try {
-        const { kind: k, name } = current;
-        await api('DELETE', `/Nutrition/${k}/${encodeURIComponent(name)}`);
-        current = null; await loadList(name); say('Nutrition removed.');
+        const name = current.name;
+        await api('DELETE', `/Nutrition/${kind}/${encodeURIComponent(name)}`);
+        current = null; await loadList(name); say('Nutrition and allergens removed.');
       } catch (err) { say(err.message, true); }
     });
 
