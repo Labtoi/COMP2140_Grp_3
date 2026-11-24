@@ -1,3 +1,5 @@
+// Outdated, switching to Dish Model
+
 export type ItemKind = 'meal' | 'side';
 export type Role = 'customer' | 'chef' | 'owner';
 

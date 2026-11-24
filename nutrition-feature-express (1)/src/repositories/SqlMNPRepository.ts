@@ -1,3 +1,5 @@
+// Outdated, switching to SqlMSRepository (Meal/Side)
+
 import { Pool } from 'pg';
 import { INutritionRepository } from '../interfaces/INutritionRepository';
 import { ItemKind, Meal, MenuItem, NutritionFacts, Side } from '../models/MenuItem';
@@ -72,9 +74,9 @@ export class SqlMNPRepository implements INutritionRepository {
   private async update(item: MenuItem): Promise<void> {
     await this.pool.query(
       `UPDATE menu_items SET details = $3, cost_cents = $4, allergens = $5,
-         calories_per_100g = $6, protein_per_100g = $7, carbohydrates_per_100g = $8,
-         fats_per_100g = $9, sodium_mg_per_100g = $10, vitamins = $11, default_weight_g = $12
-       WHERE kind = $1 AND lower(name) = lower($2)`,
+        calories_per_100g = $6, protein_per_100g = $7, carbohydrates_per_100g = $8,
+        fats_per_100g = $9, sodium_mg_per_100g = $10, vitamins = $11, default_weight_g = $12
+        WHERE kind = $1 AND lower(name) = lower($2)`,
       [item.kind, item.name, item.details, item.costCents, item.allergens, ...nutritionParams(item.nutrition)]);
   }
 

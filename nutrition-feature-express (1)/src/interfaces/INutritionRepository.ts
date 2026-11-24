@@ -1,17 +1,12 @@
-import { Meal, Side } from '../models/MenuItem';
+import { Meal, Side } from '../models/Dish';
+import { IMenuRepository } from './IMenuRepository';
 
-export interface IMenuRepository {
-    ShowAllMeals(): Promise<Meal[]>;
-    ShowAllSides(): Promise<Side[]>;
-    GetMeal(mealName: string): Promise<Meal | null>;
-    GetSide(sideName: string): Promise<Side | null>;
-}
-
+// Nutrition / menu management: everything in IMenuRepository plus writes.
 export interface INutritionRepository extends IMenuRepository {
-    AddMeal(meal: Meal): Promise<void>;
-    AddSide(side: Side): Promise<void>;
-    UpdateMeal(meal: Meal): Promise<void>;
-    UpdateSide(side: Side): Promise<void>;
-    DeleteMeal(mealName: string): Promise<void>;
-    DeleteSide(sideName: string): Promise<void>;
+    addMeal(meal: Meal): Promise<Meal>;
+    addSide(side: Side): Promise<Side>;
+    updateMeal(name: string, changes: Partial<Omit<Meal, "name" | "prepList">>): Promise<Meal>;
+    updateSide(name: string, changes: Partial<Omit<Side, "name" | "prepList">>): Promise<Side>;
+    deleteMeal(mealName: string): Promise<void>;
+    deleteSide(sideName: string): Promise<void>;
 }

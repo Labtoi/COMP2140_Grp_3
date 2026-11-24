@@ -1,5 +1,6 @@
 import { Prep } from "../models/Prep"
 
+// Which dish a prep step belongs to.
 export type PrepOwner = { meal: string } | { side: string };
 
 export interface IPreplistRepository {
