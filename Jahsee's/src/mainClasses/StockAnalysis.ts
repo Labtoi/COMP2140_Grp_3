@@ -14,11 +14,10 @@ export class StockAnalysis {
     const ok = /^\d{4}-\d{2}-\d{2}$/;
     if (!ok.test(range.start) || !ok.test(range.end)) throw new ValidationError('dates must look like YYYY-MM-DD');
     if (range.start > range.end) throw new ValidationError('start date must not be after end date');
+    
     const updatedYear = new Date().getFullYear();
     const updatedMonth = new Date().getMonth() + 1; // getMonth() returns 0-11, so add 1 for 1-12
     const updatedDay = new Date().getDate();
-
-
 
     const year1 = Number(range.start.split('-')[0]);
     const year2 = Number(range.end.split('-')[0]);
