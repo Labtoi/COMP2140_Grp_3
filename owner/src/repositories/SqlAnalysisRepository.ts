@@ -8,7 +8,7 @@ const TABLE = '"DatabaseA"';
 // would skip every entry made later that day, now that dates carry a time.
 const RANGE = `date >= $1::date AND date < ($2::date + INTERVAL '1 day')`;
 
-export class databaseAnalysisRepository implements IAnalysisRepo {
+export class SqlAnalysisRepository implements IAnalysisRepo {
 
   constructor(private readonly pool: Pool) {}
 
