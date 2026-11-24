@@ -2,7 +2,7 @@ import 'dotenv/config';
 import path from 'path';
 import express from 'express';
 import pool from './config/postgres';
-import { createRouter } from './routes/routing';
+import { createRouter } from './routes/analysisRouting';
 import { IAnalysisRepo } from './interfaces/IAnalysisRepo';
 import { databaseAnalysisRepository } from './repositories/databaseAnalysisRepository';
 import { StockAnalysis } from './mainClasses/StockAnalysis'
@@ -17,7 +17,7 @@ app.set('trust proxy', 1);                       // needed on most hosts so req.
 app.use(express.json());
 
 // The owner page itself is public HTML; it contains no data and no key.
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public'), {index: 'owner.html'}));
 
 app.get('/health', async (_req, res) => {
   await pool.query('SELECT 1');
