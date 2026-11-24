@@ -14,9 +14,23 @@ export class StockAnalysis {
     const ok = /^\d{4}-\d{2}-\d{2}$/;
     if (!ok.test(range.start) || !ok.test(range.end)) throw new ValidationError('dates must look like YYYY-MM-DD');
     if (range.start > range.end) throw new ValidationError('start date must not be after end date');
+    const updatedYear = new Date().getFullYear();
+    const updatedMonth = new Date().getMonth() + 1; // getMonth() returns 0-11, so add 1 for 1-12
+    const updatedDay = new Date().getDate();
+
+
+
+    const year1 = Number(range.start.split('-')[0]);
+    const year2 = Number(range.end.split('-')[0]);
+    if (year1 > updatedYear || year2 > updatedYear) throw new ValidationError('dates must not be in the future');
+
+    const month1 = Number(range.start.split('-')[1]);
+    const month2 = Number(range.end.split('-')[1]);
+    if (month1<1 || month1>12 || month2<1 || month2>12) throw new ValidationError('Start and end date months must be between 1 and 12.');
+    if (month1>updatedMonth || month2>updatedMonth) throw new ValidationError('Start and end date months should not be in the future.');
     if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw new ValidationError('limit must be a whole number from 1 to 50');
   }
-
+  
   mostPopularMeals(range: DateRange, limit = 5): Promise<ItemSales[]> {
     this.checkRange(range, limit);
     return this.repo.MostPopularMeals(range, limit);
