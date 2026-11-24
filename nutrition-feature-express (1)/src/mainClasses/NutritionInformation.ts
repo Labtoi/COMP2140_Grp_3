@@ -24,7 +24,7 @@ export interface NewDish {
     kind: ItemKind;
     name: string;
     details?: string;
-    /** Integer cents (SRS QA-1). */
+    /** Dollars with up to 2 decimals, like the numeric(8,2) price column (e.g. 12.5). */
     price: number;
     nutrition?: NutritionFacts;
     allergens?: string[];
@@ -81,6 +81,10 @@ const BASIS_G = 100;
  * whose six values are all 0 is treated as having no nutritional data (SRS TS-2).
  */
 export const hasNutritionData = (d: NutritionFacts): boolean => NUTRITION_KEYS.some((k) => d[k] > 0);
+
+/** Matches the numeric(8,2) price column: 0 up to 999999.99, at most 2 decimal places. */
+const isValidPrice = (p: unknown): boolean =>
+    typeof p === 'number' && Number.isFinite(p) && p >= 0 && p <= 999999.99 && Math.abs(p * 100 - Math.round(p * 100)) < 1e-6;
 
 const stripPrep = (d: Dish): MenuEntry => {
     const { prepList: _prepList, ...rest } = d;
@@ -184,8 +188,8 @@ export class NutritionInformation {
         const kind = parseKind(String(input?.kind));
         const name = String(input.name ?? '').trim();
         if (!name) throw new ValidationError('name is required');
-        if (!Number.isInteger(input.price) || input.price < 0) {
-            throw new ValidationError('price must be a whole number of cents that is 0 or more');
+        if (!isValidPrice(input.price)) {
+            throw new ValidationError('price must be between 0 and 999999.99, with at most 2 decimal places');
         }
         let facts = NO_NUTRITION;
         if (input.nutrition) {
