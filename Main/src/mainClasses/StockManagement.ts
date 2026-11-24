@@ -56,6 +56,10 @@ export class StockManagement implements IStockService {
     return this._stockRepository.getItem(itemID);
   }
 
+  async getItemName(itemID: string): Promise<string | null>{
+    return this._stockRepository.getItemName(itemID);
+  }
+
   async removeItem(itemID: string): Promise<void> {
     await this._stockRepository.removeItem(new Date(), itemID);
   }

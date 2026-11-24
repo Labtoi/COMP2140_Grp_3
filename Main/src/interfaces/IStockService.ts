@@ -8,5 +8,6 @@ export interface IStockService {
   amountUsed(itemID: string, quantity: number): Promise<void>;
   getAllItems(): Promise<SqlDatabaseM[]>;
   getItem(itemID: string): Promise<SqlDatabaseM | null>;
+  getItemName(itemID: string): Promise<string |null>
   removeItem(itemID: string): Promise<void>;
 }

@@ -7,5 +7,6 @@ export interface IStockRepository {
   updateDates(itemID: string, dateAdded: Date, expiryDate: Date | null): Promise<void>;
   addItem(date: Date, itemID: string, itemName: string, quantity: number, type?: string): Promise<void>;
   getItem(itemID: string): Promise<SqlDatabaseM | null>;
+  getItemName(itemID: string): Promise<string | null>
   getAllItems(): Promise<SqlDatabaseM[]>;
 }

@@ -22,6 +22,12 @@ export class SqlStockRepository implements IStockRepository {
     return rows[0] ? toModel(rows[0]) : null;
   }
 
+  async getItemName(itemID: string){
+    const { rows } = await this.pool.query(
+      'select item_name from "DatabaseM" where item_id = $1', [itemID]);
+    return rows[0] ?.item_name ?? null;
+  }
+  
   async getAllItems() {
     const { rows } = await this.pool.query(
       'select * from "DatabaseM" order by item_name');

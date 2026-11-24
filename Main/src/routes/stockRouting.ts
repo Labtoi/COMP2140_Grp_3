@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { IStockService } from '../interfaces/IStockService';
 import { StockValidationError } from '../mainClasses/StockManagement';
+import { SqlDatabaseM } from '../models/SqlDatabaseM';
+import { requireOwnerKey } from '../middleware/ownerAuth';
 
 // Turns "2026-12-31" into a local date (avoids the day-off timezone issue)
 function parseDate(value: unknown): Date {
@@ -23,8 +25,20 @@ function requireText(value: unknown, name: string): string {
   return value.trim();
 }
 
+// Sends dates to the page as plain "YYYY-MM-DD" so the browser's timezone can't shift them
+function ymd(d: Date | string | null): string | null {
+  if (!d) return null;
+  if (!(d instanceof Date)) return String(d).slice(0, 10);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+const view = (i: SqlDatabaseM) => ({ ...i, dateAdded: ymd(i.dateAdded), expiryDate: ymd(i.expiryDate) });
+
 export function createStockRouter(service: IStockService): Router {
   const router = Router();
+
+  // Every stock route needs the owner key.
+  router.use('/Stock', requireOwnerKey);
 
   const fail = (res: Response, error: unknown) => {
     if (error instanceof StockValidationError) {
@@ -36,7 +50,7 @@ export function createStockRouter(service: IStockService): Router {
 
   router.get('/Stock', async (_req: Request, res: Response) => {
     try {
-      res.status(200).json({ success: true, data: await service.getAllItems() });
+      res.status(200).json({ success: true, data: (await service.getAllItems()).map(view) });
     } catch (error) { fail(res, error); }
   });
 
@@ -47,22 +61,34 @@ export function createStockRouter(service: IStockService): Router {
       if (!Number.isFinite(days) || days < 0) {
         throw new StockValidationError('days must be a non-negative number');
       }
-      res.status(200).json({ success: true, data: await service.expiryPeriod(days) });
+      res.status(200).json({ success: true, data: (await service.expiryPeriod(days)).map(view) });
     } catch (error) { fail(res, error); }
   });
 
   router.get('/Stock/:id', async (req: Request, res: Response) => {
     try {
       const item = await service.getItem(String(req.params.id));
-      if (!item) return res.status(404).json({ message: 'Not found' });
-      res.status(200).json({ success: true, data: item });
+      if (!item) return res.status(404).json({ message: 'Item ID not found.' });
+      res.status(200).json({ success: true, data: view(item) });
     } catch (error) { fail(res, error); }
   });
 
   router.get('/Stock/:id/available', async (req: Request, res: Response) => {
     try {
-      const available = await service.itemAvailabilityForMealPrep(String(req.params.id));
+      const id = String(req.params.id);
+      if (!(await service.getItem(id))) return res.status(404).json({ message: 'Item ID not found.' });
+      const available = await service.itemAvailabilityForMealPrep(id);
       res.status(200).json({ success: true, data: { available } });
+    } catch (error) { fail(res, error); }
+  });
+
+  router.get('/Stock/:id/name', async (req: Request, res: Response) => {
+    try {
+      const id = String(req.params.id);
+      const name = await service.getItemName(id);
+      if (name === null) return res.status(404).json({ message: 'Item ID not found.' });
+      
+      res.status(200).json({ success: true, data: { name } });
     } catch (error) { fail(res, error); }
   });
 
@@ -74,7 +100,8 @@ export function createStockRouter(service: IStockService): Router {
       const quantity = requirePositiveNumber(req.body?.quantity, 'quantity');
       const expiryDate = parseDate(req.body?.expiryDate);
       await service.restockItem(itemID, itemName, quantity, expiryDate);
-      res.status(200).json({ success: true, data: await service.getItem(itemID) });
+      const saved = await service.getItem(itemID);
+      res.status(200).json({ success: true, data: saved ? view(saved) : null });
     } catch (error) { fail(res, error); }
   });
 
@@ -82,15 +109,18 @@ export function createStockRouter(service: IStockService): Router {
     try {
       const id = String(req.params.id);
       const quantity = requirePositiveNumber(req.body?.quantity, 'quantity');
-      if (!(await service.getItem(id))) return res.status(404).json({ message: 'Not found' });
+      if (!(await service.getItem(id))) return res.status(404).json({ message: 'Item ID not found.' });
       await service.amountUsed(id, quantity);
-      res.status(200).json({ success: true, data: await service.getItem(id) });
+      const saved = await service.getItem(id);
+      res.status(200).json({ success: true, data: saved ? view(saved) : null });
     } catch (error) { fail(res, error); }
   });
 
   router.delete('/Stock/:id', async (req: Request, res: Response) => {
     try {
-      await service.removeItem(String(req.params.id));
+      const id = String(req.params.id);
+      if (!(await service.getItem(id))) return res.status(404).json({ message: 'Item ID not found. Nothing removed.' });
+      await service.removeItem(id);
       res.status(204).send();
     } catch (error) { fail(res, error); }
   });
