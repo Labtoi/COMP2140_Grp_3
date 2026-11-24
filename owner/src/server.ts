@@ -11,6 +11,8 @@ import { IStockService } from './interfaces/IStockService';
 import { SqlStockRepository } from './repositories/SqlStockRepository';
 import { StockManagement } from './mainClasses/StockManagement';
 import { createStockRouter } from './routes/stockRouting';
+import { SqlAccountRepository } from './repositories/SqlAccountRepository';
+import { createAccountsRouter } from './routes/accountsRouting';
 
 
 const app = express();
@@ -20,6 +22,7 @@ const repo: IAnalysisRepo = new databaseAnalysisRepository(pool);
 const stockAnalysis = new StockAnalysis(repo);
 const stockRepo: IStockRepository = new SqlStockRepository(pool);
 const stockManagement: IStockService = new StockManagement(stockRepo);
+const accountRepo = new SqlAccountRepository();
 
 app.set('trust proxy', 1);                       // needed on most hosts so req.ip is the real visitor
 app.use(express.json());
@@ -34,6 +37,7 @@ app.get('/health', async (_req, res) => {
 
 app.use('/', createRouter(stockAnalysis));
 app.use('/', createStockRouter(stockManagement)); 
+app.use('/', createAccountsRouter(accountRepo));
 
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
