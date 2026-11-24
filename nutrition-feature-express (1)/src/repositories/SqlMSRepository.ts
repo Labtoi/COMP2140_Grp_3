@@ -5,17 +5,17 @@ import type {
   IPreplistRepository,
   IOwnerNutritionServiceRepo,
   PrepOwner,
-} from "../interfaces/index.ts";
+} from "../interfaces/index";
 import {
   type Meal, type Side, type Prep, type Dish,
   type DishRow, type PrepRow,
   dishFromRow, dishToRow, prepFromRow, prepToRow,
-} from "../models/index.ts";
+} from "../models/index";
 
 /** The two Supabase tables that back SqlDatabaseMeals / SqlDatabaseSides. */
-const MEALS = "sql_database_meals";
-const SIDES = "sql_database_sides";
-const PREP = "prep";
+const MEALS = "SqlRepositoryMeals";
+const SIDES = "SqlRepositorySides";
+const PREP = "Prep";
 type DishTable = typeof MEALS | typeof SIDES;
 
 const DISH_SELECT = "*, prep(*)"; // pulls prepList in one query
@@ -48,13 +48,15 @@ export class SqlMSRepository
     return (data ?? []).map(prepFromRow);
   }
 
-  async getPrep(name: string): Promise<Prep> {
-    const { data, error } = await this.db
-      .from(PREP).select("*").eq("item_name", name).limit(1).returns<PrepRow[]>();
-    if (error) throw error;
-    if (!data?.length) throw new Error(`Prep "${name}" not found`);
-    return prepFromRow(data[0]);
-  }
+async getPrep(name: string): Promise<Prep> {
+  const { data, error } = await this.db
+    .from(PREP).select("*").eq("item_name", name).limit(1).returns<PrepRow[]>();
+  if (error) throw error;
+
+  const row = data?.[0];
+  if (!row) throw new Error(`Prep "${name}" not found`);
+  return prepFromRow(row);
+}
 
   async addPrep(owner: PrepOwner, prep: Prep): Promise<Prep> {
     const link = "meal" in owner ? { meal_name: owner.meal } : { side_name: owner.side };
