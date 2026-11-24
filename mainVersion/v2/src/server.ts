@@ -4,7 +4,7 @@ import express from 'express';
 import pool from './config/postgres';
 import { createRouter } from './routes/analysisRouting';
 import { IAnalysisRepo } from './interfaces/IAnalysisRepo';
-import { databaseAnalysisRepository } from './repositories/databaseAnalysisRepository';
+import { SqlAnalysisRepository } from './repositories/SqlAnalysisRepository';
 import { StockAnalysis } from './mainClasses/StockAnalysis'
 import { IStockRepository } from './interfaces/IStockRepository';
 import { IStockService } from './interfaces/IStockService';
@@ -18,7 +18,7 @@ import { createAccountsRouter } from './routes/accountsRouting';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const repo: IAnalysisRepo = new databaseAnalysisRepository(pool);
+const repo: IAnalysisRepo = new SqlAnalysisRepository(pool);
 const stockAnalysis = new StockAnalysis(repo);
 const stockRepo: IStockRepository = new SqlStockRepository(pool);
 const stockManagement: IStockService = new StockManagement(stockRepo);

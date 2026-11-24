@@ -25,8 +25,12 @@ export class StockAnalysis {
 
     const month1 = Number(range.start.split('-')[1]);
     const month2 = Number(range.end.split('-')[1]);
+    const day1 = Number(range.end.split('-')[2]);
+    const day2 = Number(range.end.split('-')[2]);
     if (month1<1 || month1>12 || month2<1 || month2>12) throw new ValidationError('Start and end date months must be between 1 and 12.');
     if (month1>updatedMonth || month2>updatedMonth) throw new ValidationError('Start and end date months should not be in the future.');
+    if (day1>updatedDay || day2>updatedDay) throw new ValidationError('Start and end date days should not be in the future.');
+    
     if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw new ValidationError('limit must be a whole number from 1 to 50');
   }
   
