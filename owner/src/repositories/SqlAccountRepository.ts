@@ -49,7 +49,7 @@ export class SqlAccountRepository implements IChefRepo, ICustomerRepo {
     async GetCustomerByID(customerID: string): Promise<customer> {
         const { data, error } = await supabase
             .from("Customer")
-            .select("*")
+            .select("customerID, customerName, customerPreferences")
             .eq("customerID", customerID)
             .single();
         if (error) {
@@ -71,7 +71,7 @@ export class SqlAccountRepository implements IChefRepo, ICustomerRepo {
     async GetAllCustomers(): Promise<customer[]> {
         const { data, error } = await supabase
             .from("Customer")
-            .select("*");
+            .select("customerID, customerName, customerPreferences");
         if (error) {
             throw new Error(`Failed to get all customers: ${error.message}`);
         }
@@ -128,6 +128,16 @@ export class SqlAccountRepository implements IChefRepo, ICustomerRepo {
             .insert(chef);
         if (error) {
             throw new Error(`Failed to add chef: ${error.message}`);
+        }
+    }
+
+    async RemoveChef(chefID: string): Promise<void> {
+        const { error } = await supabase
+            .from("Chef")
+            .delete()
+            .eq("chefID", chefID);
+        if (error) {
+            throw new Error(`Failed to remove chef: ${error.message}`);
         }
     }
 }
