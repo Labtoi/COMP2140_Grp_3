@@ -1,11 +1,11 @@
-//TODO Finish this interface
-import { PrepItem } from "../models/PrepItem"
+import { Prep } from "../models/Prep"
 
-export interface IPreparationRepository {
-    createPrep(item: string): Promise<void>
-    getPrep(itemName: string): Promise<PrepItem>
-    ShowAllPrep(): Promise<PrepItem[]>
-    UpdatePrep(itemName: string): Promise<void>
-    AddPrep(prep: PrepItem): Promise<void>
-    RemovePrep(itemName: string): Promise<void>
+export type PrepOwner = { meal: string } | { side: string };
+
+export interface IPreplistRepository {
+    showAllPrep(): Promise<Prep[]>;
+    getPrep(name: string): Promise<Prep>;
+    addPrep(owner: PrepOwner, prep: Prep): Promise<Prep>;
+    updatePrep(name: string, changes: Partial<Omit<Prep, "id">>): Promise<Prep>;
+    removePrep(name: string): Promise<void>;
 }
