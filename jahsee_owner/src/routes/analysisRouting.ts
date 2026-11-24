@@ -71,12 +71,6 @@ export function createRouter(service: StockAnalysis): Router {
     } catch (error) { fail(res, error); }
   });
 
-  //router.post('/Analysis', async (req: Request, res: Response) => {
-  //  try {
-  //    res.status(201).json({ success: true, data: await service.add(req.body) });
-  //  } catch (error) { fail(res, error); }
-  //});
-
   router.delete('/Analysis/:id', async (req: Request, res: Response) => {
     try {
       const id = String(req.params.id);
