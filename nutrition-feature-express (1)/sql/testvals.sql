@@ -1,7 +1,7 @@
 -- Seed data. Safe to re-run: dishes skip on name clash, prep skips if the same item already exists for that dish.
 begin;
  
-insert into "SqlDatabaseMeals" (name, details, price, calories, carbohydrates, protein, sodium, fats, vitamins, allergens) values
+insert into sql_database_meals (name, details, price, calories, carbohydrates, protein, sodium, fats, vitamins, allergens) values
   ('Classic Burger', 'Beef patty with cheese lettuce and tomato in a brioche bun', 12.50, 700, 45, 35, 900, 40, 5, array['gluten','dairy','sesame']::text[]),
   ('Grilled Chicken Sandwich', 'Marinated chicken breast with garlic mayo', 11.00, 520, 42, 38, 780, 18, 4, array['gluten','eggs']::text[]),
   ('Margherita Pizza', 'Tomato sauce mozzarella and fresh basil', 13.00, 800, 90, 32, 1400, 34, 6, array['gluten','dairy']::text[]),
@@ -12,7 +12,7 @@ insert into "SqlDatabaseMeals" (name, details, price, calories, carbohydrates, p
   ('Mushroom Risotto', 'Creamy arborio rice with chestnut mushrooms', 12.00, 560, 74, 14, 900, 22, 7, array['dairy']::text[])
 on conflict (name) do nothing;
 
-insert into "SqlDatabaseSides" (name, details, price, calories, carbohydrates, protein, sodium, fats, vitamins, allergens) values
+insert into sql_database_sides (name, details, price, calories, carbohydrates, protein, sodium, fats, vitamins, allergens) values
   ('Fries', 'Skin-on fries with sea salt', 4.00, 320, 42, 4, 300, 15, 2, '{}'::text[]),
   ('Side Salad', 'Mixed leaves with house vinaigrette', 3.50, 90, 8, 2, 120, 6, 10, '{}'::text[]),
   ('Onion Rings', 'Beer battered onion rings', 4.50, 410, 48, 6, 520, 21, 2, array['gluten','eggs','dairy']::text[]),
@@ -21,7 +21,7 @@ insert into "SqlDatabaseSides" (name, details, price, calories, carbohydrates, p
   ('Steamed Rice', 'Fluffy jasmine rice', 2.50, 210, 46, 4, 10, 0, 0, '{}'::text[])
 on conflict (name) do nothing;
  
-insert into "Prep" (item_name, type, item_quantity, steps, meal_name)
+insert into prep (item_name, type, item_quantity, steps, meal_name)
 select v.* from (values
   ('Beef Patty', 'protein', 150, 'Season with salt and pepper, form into a patty, grill 4 minutes per side', 'Classic Burger'),
   ('Brioche Bun', 'bread', 1, 'Slice and toast on the grill', 'Classic Burger'),
@@ -36,9 +36,9 @@ select v.* from (values
   ('Arborio Rice', 'grain', 90, 'Toast then add stock gradually, stirring, for 18 minutes', 'Mushroom Risotto'),
   ('Chestnut Mushrooms', 'vegetable', 100, 'Slice and saute until golden', 'Mushroom Risotto')
 ) as v(item_name, type, item_quantity, steps, meal_name)
-where not exists (select 1 from "Prep" p where p.item_name = v.item_name and p.meal_name = v.meal_name);
+where not exists (select 1 from prep p where p.item_name = v.item_name and p.meal_name = v.meal_name);
  
-insert into "Prep" (item_name, type, item_quantity, steps, side_name)
+insert into prep (item_name, type, item_quantity, steps, side_name)
 select v.* from (values
   ('Potatoes', 'vegetable', 300, 'Cut into batons, soak, then double fry', 'Fries'),
   ('Salad Greens', 'vegetable', 80, 'Wash and dry thoroughly', 'Side Salad'),
@@ -47,6 +47,6 @@ select v.* from (values
   ('Baguette', 'bread', 1, 'Slice, spread garlic butter, bake 8 minutes', 'Garlic Bread'),
   ('Jasmine Rice', 'grain', 75, 'Rinse and steam for 12 minutes', 'Steamed Rice')
 ) as v(item_name, type, item_quantity, steps, side_name)
-where not exists (select 1 from "Prep" p where p.item_name = v.item_name and p.side_name = v.side_name);
+where not exists (select 1 from prep p where p.item_name = v.item_name and p.side_name = v.side_name);
  
 commit;
