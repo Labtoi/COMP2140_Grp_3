@@ -45,7 +45,7 @@ export class databaseAnalysisRepository implements IAnalysisRepo {
   }
 
   async GetAllAnalysis(): Promise<Analysis[]> {
-    const result = await this.pool.query(`SELECT * FROM ${TABLE} ORDER BY date ASC`);
+    const result = await this.pool.query(`SELECT * FROM ${TABLE} ORDER BY date DESC`);
     return result.rows.map((r) => this.toAnalysis(r));
   }
 

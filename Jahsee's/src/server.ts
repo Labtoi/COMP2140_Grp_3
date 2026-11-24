@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import path from 'path';
 import express from 'express';
 import pool from './config/postgres';
 import { createRouter } from './routes/routing';
@@ -12,12 +13,17 @@ const PORT = process.env.PORT || 3000;
 const repo: IAnalysisRepo = new databaseAnalysisRepository(pool);
 const stockAnalysis = new StockAnalysis(repo);
 
+app.set('trust proxy', 1);                       // needed on most hosts so req.ip is the real visitor
 app.use(express.json());
-app.use('/', createRouter(stockAnalysis));
+
+// The owner page itself is public HTML; it contains no data and no key.
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/health', async (_req, res) => {
-  const result = await pool.query('SELECT NOW()');
-  res.json({ success: true, time: result.rows[0].now });
+  await pool.query('SELECT 1');
+  res.json({ success: true });
 });
+
+app.use('/', createRouter(stockAnalysis));
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

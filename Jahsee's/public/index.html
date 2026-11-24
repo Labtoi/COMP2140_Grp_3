@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jahsee's - Owner</title>
+<style>
+  body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 0 12px; }
+  button, input, select { font: inherit; padding: 6px 10px; margin: 2px 0; }
+  input { width: 100%; box-sizing: border-box; }
+  pre { background: #f4f4f4; color: #111; padding: 10px; overflow-x: auto; white-space: pre-wrap; }
+  .hidden { display: none; }
+  .error { color: #b00020; }
+  label { display: block; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<h1>Owner</h1>
+
+<!-- Key screen -->
+<div id="gate">
+  <p>Enter your owner key:</p>
+  <form id="gateForm">
+    <input id="keyInput" type="password" required>
+    <button type="submit">Enter</button>
+  </form>
+  <p id="gateError" class="error"></p>
+</div>
+
+<!-- Owner menu -->
+<div id="app" class="hidden">
+  <p>
+    <button data-menu="add">1) Add</button>
+    <button data-menu="list">2) List</button>
+    <button data-menu="get">3) Get Specific Analysis</button>
+    <button data-menu="popular">4) Show Popular</button>
+    <button data-menu="total">5) Total Sales</button>
+    <button data-menu="remove">6) Remove</button>
+    <button id="lockBtn">Quit</button>
+  </p>
+
+  <!-- 1) Add -->
+  <form id="add" class="hidden panel">
+    <label>ID <input id="addId" required></label>
+    <label>Meals (name:price:qty, ...) <input id="addMeals" placeholder="Jerk Chicken:1500:8, Curry Goat:1800:4"></label>
+    <label>Sides (name:price:qty, ...) <input id="addSides" placeholder="Rice:300:10"></label>
+    <button type="submit">Save</button>
+  </form>
+
+  <!-- 3) Get specific -->
+  <form id="get" class="hidden panel">
+    <p>Existing IDs: <span class="ids"></span></p>
+    <label>ID to view <input id="getId" required></label>
+    <button type="submit">View</button>
+  </form>
+
+  <!-- 4) Popular -->
+  <form id="popular" class="hidden panel">
+    <label>Start date <input type="date" class="start" required></label>
+    <label>End date <input type="date" class="end" required></label>
+    <label>Show
+      <select id="popularChoice">
+        <option value="topMeals">Most Popular Meals</option>
+        <option value="leastMeals">Least Popular Meals</option>
+        <option value="topSides">Most Popular Sides</option>
+        <option value="leastSides">Least Popular Sides</option>
+      </select>
+    </label>
+    <button type="submit">Show</button>
+  </form>
+
+  <!-- 5) Total sales -->
+  <form id="total" class="hidden panel">
+    <label>Start date <input type="date" class="start" required></label>
+    <label>End date <input type="date" class="end" required></label>
+    <button type="submit">Show</button>
+  </form>
+
+  <!-- 6) Remove -->
+  <form id="remove" class="hidden panel">
+    <p>Existing IDs: <span class="ids"></span></p>
+    <label>ID to remove <input id="removeId" required></label>
+    <button type="submit">Remove</button>
+  </form>
+
+  <pre id="out"></pre>
+</div>
+
+<script>
+  // Leave empty when this page is served by your server. Otherwise put the server address here.
+  const API_BASE = "";
+
+  const $ = (id) => document.getElementById(id);
+  let ownerKey = sessionStorage.getItem("ownerKey") || "";
+  const PANELS = ["add", "get", "popular", "total", "remove"];
+
+  async function api(path, options = {}) {
+    const res = await fetch(API_BASE + path, {
+      ...options,
+      headers: { "Content-Type": "application/json", "x-owner-key": ownerKey },
+    });
+    const body = res.status === 204 ? {} : await res.json().catch(() => ({}));
+    if (res.status === 401 || res.status === 429) { lock(body.message); throw new Error(body.message); }
+    if (!res.ok) throw new Error(body.message || "Something went wrong");
+    return body;
+  }
+
+  const out = (text) => { $("out").className = ""; $("out").textContent = text; };
+  const outError = (e) => { $("out").className = "error"; $("out").textContent = e.message; };
+
+  // ---- same layout as the console version ----
+  const fmtItems = (items) =>
+    items.map((i) => `    ${i.name} ($${i.price} x ${i.quantity ?? "?"}) = $${i.price * (i.quantity ?? 0)}`).join("\n");
+
+  function fmtAnalysis(list) {
+    if (!list.length) return "No entries yet.";
+    return list.map((a) =>
+      "----------------------------------------\n" +
+      `ID: ${a.id}     Date: ${a.date}\n\n` +
+      "Meals:\n" + fmtItems(a.meals) + "\n" +
+      "Sides:\n" + fmtItems(a.sides) + "\n\n" +
+      `Sold: ${a.mealsSold} meals + ${a.sidesSold} sides = ${a.totalSold}\n` +
+      `Revenue: $${a.revenue}\n`
+    ).join("\n");
+  }
+
+  // "Jerk Chicken:1500:8, Curry Goat:1800:4" -> [{name, price, quantity}, ...]
+  function parseItems(text) {
+    return text.split(",").map((s) => s.trim()).filter(Boolean).map((s) => {
+      const [name, price, quantity] = s.split(":");
+      return { name: name.trim(), price: Number(price), quantity: Number(quantity) };
+    });
+  }
+
+  // ---- menu ----
+  function showPanel(name) {
+    PANELS.forEach((p) => $(p).classList.toggle("hidden", p !== name));
+    $("out").textContent = "";
+  }
+
+  async function fillIds() {
+    const { data } = await api("/Analysis");
+    document.querySelectorAll(".ids").forEach((s) => (s.textContent = data.map((a) => a.id).join(", ") || "(none)"));
+  }
+
+  document.querySelectorAll("[data-menu]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const m = btn.dataset.menu;
+      try {
+        if (m === "list") {
+          showPanel(null);
+          out(fmtAnalysis((await api("/Analysis")).data));
+        } else {
+          showPanel(m);
+          if (m === "get" || m === "remove") await fillIds();
+        }
+      } catch (e) { outError(e); }
+    });
+  });
+
+  // 1) Add
+  $("add").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const body = JSON.stringify({
+        id: $("addId").value.trim(),
+        meals: parseItems($("addMeals").value),
+        sides: parseItems($("addSides").value),
+      });
+      const { data } = await api("/Analysis/items", { method: "POST", body });
+      out(`Saved. Total sold: ${data.totalSold}, revenue: ${data.revenue}`);
+      $("add").reset();
+    } catch (e) { outError(e); }
+  });
+
+  // 3) Get specific
+  $("get").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const { data } = await api("/Analysis/" + encodeURIComponent($("getId").value.trim()));
+      out(fmtAnalysis([data]));
+    } catch (e) { outError(e); }
+  });
+
+  // 4) Popular and 5) Total sales both use the same date-range summary
+  async function summary(form) {
+    const start = form.querySelector(".start").value;
+    const end = form.querySelector(".end").value;
+    return (await api(`/Summary?start=${start}&end=${end}`)).data;
+  }
+
+  $("popular").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const d = await summary($("popular"));
+      const choice = $("popularChoice").value;
+      const list = d[choice];
+      const isMeal = choice.endsWith("Meals");
+      if (!list.length) return out(`No ${isMeal ? "meals" : "sides"} sold in that range.`);
+      const title = { topMeals: "Top meals", leastMeals: "Least popular meals", topSides: "Top sides", leastSides: "Least popular sides" }[choice];
+      out(title + ":\n" + list.map((m, i) => `  ${i + 1}. ${m.name} - ${m.quantitySold} sold`).join("\n"));
+    } catch (e) { outError(e); }
+  });
+
+  $("total").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const d = await summary($("total"));
+      out(`Total meals sold: ${d.totalMeals}\nTotal sides sold: ${d.totalSides}\nTotal revenue: $${d.revenue}`);
+    } catch (e) { outError(e); }
+  });
+
+  // 6) Remove
+  $("remove").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const id = $("removeId").value.trim();
+    if (!confirm(`Remove entry "${id}"? This cannot be undone.`)) return;
+    try {
+      await api("/Analysis/" + encodeURIComponent(id), { method: "DELETE" });
+      out(`Removed "${id}".`);
+      $("remove").reset();
+      await fillIds();
+    } catch (e) { outError(e); }
+  });
+
+  // ---- key gate ----
+  function lock(message) {
+    ownerKey = "";
+    sessionStorage.removeItem("ownerKey");
+    $("app").classList.add("hidden");
+    $("gate").classList.remove("hidden");
+    $("keyInput").value = "";
+    $("gateError").textContent = message || "";
+  }
+
+  async function unlock(key) {
+    ownerKey = key;
+    try {
+      await api("/verify");
+    } catch (e) { $("gateError").textContent = e.message; return; }
+    sessionStorage.setItem("ownerKey", ownerKey);
+    $("gate").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    showPanel(null);
+  }
+
+  $("gateForm").addEventListener("submit", (ev) => { ev.preventDefault(); unlock($("keyInput").value.trim()); });
+  $("lockBtn").addEventListener("click", () => lock(""));
+  if (ownerKey) unlock(ownerKey);
+</script>
+</body>
+</html>
