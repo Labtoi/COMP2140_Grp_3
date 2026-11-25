@@ -1,4 +1,4 @@
-import { customer } from "../models/customer.js";
+import { customer } from "../models/accountsModels.js";
 
 export interface ICustomerRepo {
     AddCustomer(customer: customer): Promise<void>;
