@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Owner</title>
+<style>
+  body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 0 12px; }
+  button, input, select { font: inherit; padding: 6px 10px; margin: 2px 0; }
+  input { width: 100%; box-sizing: border-box; }
+  pre { background: #f4f4f4; color: #111; padding: 10px; overflow-x: auto; white-space: pre-wrap; }
+  .hidden { display: none; }
+  .error { color: #b00020; }
+  label { display: block; margin-top: 8px; }
+  .tabs button { font-weight: bold; }
+  .tabs button.active { background: #222; color: #fff; }
+</style>
+</head>
+<body>
+
+<h1>Owner</h1>
+
+<!-- Key screen -->
+<div id="gate">
+  <p>Enter your owner key:</p>
+  <form id="gateForm">
+    <input id="keyInput" type="password" required>
+    <button type="submit">Enter</button>
+  </form>
+  <p id="gateError" class="error"></p>
+</div>
+
+<div id="app" class="hidden">
+
+  <p class="tabs">
+    <button id="tabAnalysis" data-section="analysis">Analysis</button>
+    <button id="tabStock" data-section="stock">Stock Management</button>
+    <button id="tabAccounts" data-section="accounts">Accounts</button>
+    <button id="tabMenu" data-section="menu">Menu &amp; Nutrition</button>
+    <button id="lockBtn">Quit</button>
+  </p>
+
+  <!-- ================= ANALYSIS ================= -->
+  <div id="analysis">
+    <p>
+      <button data-menu="aAdd">1) Add</button>
+      <button data-menu="aList">2) List</button>
+      <button data-menu="aGet">3) Get Specific Analysis</button>
+      <button data-menu="aPopular">4) Show Popular</button>
+      <button data-menu="aTotal">5) Total Sales</button>
+      <button data-menu="aRemove">6) Remove</button>
+    </p>
+
+    <form id="aAdd" class="hidden panel">
+      <label>ID <input id="aAddId" required></label>
+      <label>Meals (name:price:qty, ...) <input id="aAddMeals" placeholder="Jerk Chicken:1500:8, Curry Goat:1800:4"></label>
+      <label>Sides (name:price:qty, ...) <input id="aAddSides" placeholder="Rice:300:10"></label>
+      <button type="submit">Save</button>
+    </form>
+
+    <form id="aGet" class="hidden panel">
+      <p>Existing IDs: <span class="aIds"></span></p>
+      <label>ID to view <input id="aGetId" required></label>
+      <button type="submit">View</button>
+    </form>
+
+    <form id="aPopular" class="hidden panel">
+      <label>Start date <input type="date" class="start" required></label>
+      <label>End date <input type="date" class="end" required></label>
+      <label>Show
+        <select id="aPopularChoice">
+          <option value="topMeals">Most Popular Meals</option>
+          <option value="leastMeals">Least Popular Meals</option>
+          <option value="topSides">Most Popular Sides</option>
+          <option value="leastSides">Least Popular Sides</option>
+        </select>
+      </label>
+      <button type="submit">Show</button>
+    </form>
+
+    <form id="aTotal" class="hidden panel">
+      <label>Start date <input type="date" class="start" required></label>
+      <label>End date <input type="date" class="end" required></label>
+      <button type="submit">Show</button>
+    </form>
+
+    <form id="aRemove" class="hidden panel">
+      <p>Existing IDs: <span class="aIds"></span></p>
+      <label>ID to remove <input id="aRemoveId" required></label>
+      <button type="submit">Remove</button>
+    </form>
+  </div>
+
+  <!-- ================= STOCK ================= -->
+  <div id="stock" class="hidden">
+    <p>
+      <button data-menu="sRestock">1) Add / Restock</button>
+      <button data-menu="sList">2) List All</button>
+      <button data-menu="sGet">3) View Item</button>
+      <button data-menu="sUse">4) Use Stock</button>
+      <button data-menu="sExpiring">5) Expiring Soon</button>
+      <button data-menu="sAvail">6) Available for Meal Prep?</button>
+      <button data-menu="sRemove">7) Remove</button>
+    </p>
+
+    <form id="sRestock" class="hidden panel">
+      <p>Existing IDs: <span class="sIds"></span></p>
+      <p>Use an existing ID to add to that item's quantity.</p>
+      <label>Item ID <input id="sRestockId" required></label>
+      <label>Item name <input id="sRestockName" required></label>
+      <label>Quantity added <input id="sRestockQty" type="number" min="0" step="any" required></label>
+      <label>Expiry date <input id="sRestockExpiry" type="date" required></label>
+      <button type="submit">Save</button>
+    </form>
+
+    <form id="sGet" class="hidden panel">
+      <p>Existing IDs: <span class="sIds"></span></p>
+      <label>Item ID to view <input id="sGetId" required></label>
+      <button type="submit">View</button>
+    </form>
+
+    <form id="sUse" class="hidden panel">
+      <p>Existing IDs: <span class="sIds"></span></p>
+      <label>Item ID <input id="sUseId" required></label>
+      <label>Quantity used <input id="sUseQty" type="number" min="0" step="any" required></label>
+      <button type="submit">Use</button>
+    </form>
+
+    <form id="sExpiring" class="hidden panel">
+      <label>Show items expiring within (days) <input id="sExpiringDays" type="number" min="0" value="7" required></label>
+      <button type="submit">Show</button>
+    </form>
+
+    <form id="sAvail" class="hidden panel">
+      <p>Existing IDs: <span class="sIds"></span></p>
+      <label>Item ID <input id="sAvailId" required></label>
+      <button type="submit">Check</button>
+    </form>
+
+    <form id="sRemove" class="hidden panel">
+      <p>Existing IDs: <span class="sIds"></span></p>
+      <label>Item ID to remove <input id="sRemoveId" required></label>
+      <button type="submit">Remove</button>
+    </form>
+  </div>
+
+  <!-- ================= ACCOUNTS ================= -->
+  <div id="accounts" class="hidden">
+    <p>
+      Chefs:
+      <button data-menu="chList">1) View All</button>
+      <button data-menu="chGet">2) View One</button>
+      <button data-menu="chAdd">3) Add Chef</button>
+      <button data-menu="chShowPw">4) Show Password</button>
+      <button data-menu="chChangePw">5) Change Password</button>
+      <button data-menu="chRemove">6) Remove Chef</button>
+    </p>
+    <p>
+      Customers:
+      <button data-menu="cuList">7) View All</button>
+      <button data-menu="cuGet">8) View One</button>
+      <button data-menu="cuRemove">9) Remove Customer</button>
+    </p>
+
+    <form id="chGet" class="hidden panel">
+      <p>Chef IDs: <span class="chIds"></span></p>
+      <label>Chef ID to view <input id="chGetId" required></label>
+      <button type="submit">View</button>
+    </form>
+
+    <form id="chAdd" class="hidden panel" autocomplete="off">
+      <p>Existing chef IDs: <span class="chIds"></span></p>
+      <label>Chef ID <input id="chAddId" required></label>
+      <label>Chef name <input id="chAddName" required></label>
+      <label>Password (at least 6 characters) <input id="chAddPw" type="password" minlength="6" required autocomplete="new-password"></label>
+      <button type="submit">Save</button>
+    </form>
+
+    <form id="chShowPw" class="hidden panel">
+      <p>Chef IDs: <span class="chIds"></span></p>
+      <label>Chef ID <input id="chShowPwId" required></label>
+      <button type="submit">Show Password</button>
+    </form>
+
+    <form id="chChangePw" class="hidden panel" autocomplete="off">
+      <p>Chef IDs: <span class="chIds"></span></p>
+      <label>Chef ID <input id="chChangePwId" required></label>
+      <label>New password (at least 6 characters) <input id="chChangePwNew" type="password" minlength="6" required autocomplete="new-password"></label>
+      <button type="submit">Change Password</button>
+    </form>
+
+    <form id="chRemove" class="hidden panel">
+      <p>Chef IDs: <span class="chIds"></span></p>
+      <label>Chef ID to remove <input id="chRemoveId" required></label>
+      <button type="submit">Remove</button>
+    </form>
+
+    <form id="cuGet" class="hidden panel">
+      <p>Customer IDs: <span class="cuIds"></span></p>
+      <label>Customer ID to view <input id="cuGetId" required></label>
+      <button type="submit">View</button>
+    </form>
+
+    <form id="cuRemove" class="hidden panel">
+      <p>Customer IDs: <span class="cuIds"></span></p>
+      <label>Customer ID to remove <input id="cuRemoveId" required></label>
+      <button type="submit">Remove</button>
+    </form>
+  </div>
+
+  <!-- ================= MENU & NUTRITION ================= -->
+  <div id="menu" class="hidden">
+    <p>
+      <button data-menu="msMeals">1) View All Meals</button>
+      <button data-menu="msSides">2) View All Sides</button>
+    </p>
+    <p class="muted">View only. Nutrition values are shown per 100 g.</p>
+  </div>
+
+  <pre id="out"></pre>
+</div>
+
+<script>
+  // Leave empty when this page is served by your server. Otherwise put the server address here.
+  const API_BASE = "";
+
+  const $ = (id) => document.getElementById(id);
+  let ownerKey = sessionStorage.getItem("ownerKey") || "";
+
+  async function api(path, options = {}) {
+    const res = await fetch(API_BASE + path, {
+      ...options,
+      headers: { "Content-Type": "application/json", "x-owner-key": ownerKey },
+    });
+    const body = res.status === 204 ? {} : await res.json().catch(() => ({}));
+    if (res.status === 401 || res.status === 429) { lock(body.message); throw new Error(body.message); }
+    if (!res.ok) throw new Error(body.message || "Something went wrong");
+    return body;
+  }
+  const post = (path, obj) => api(path, { method: "POST", body: JSON.stringify(obj) });
+
+  const out = (text) => { $("out").className = ""; $("out").textContent = text; };
+  const outError = (e) => { $("out").className = "error"; $("out").textContent = e.message; };
+
+  // ---------- menu / panels ----------
+  const PANELS = [...document.querySelectorAll(".panel")].map((p) => p.id);
+
+  function showPanel(name) {
+    PANELS.forEach((p) => $(p).classList.toggle("hidden", p !== name));
+    $("out").textContent = "";
+  }
+
+  function showSection(name) {
+    $("analysis").classList.toggle("hidden", name !== "analysis");
+    $("stock").classList.toggle("hidden", name !== "stock");
+    $("accounts").classList.toggle("hidden", name !== "accounts");
+    $("menu").classList.toggle("hidden", name !== "menu");
+    $("tabAnalysis").classList.toggle("active", name === "analysis");
+    $("tabStock").classList.toggle("active", name === "stock");
+    $("tabAccounts").classList.toggle("active", name === "accounts");
+    $("tabMenu").classList.toggle("active", name === "menu");
+    showPanel(null);
+  }
+  document.querySelectorAll("[data-section]").forEach((b) =>
+    b.addEventListener("click", () => showSection(b.dataset.section)));
+
+  // Each menu button either runs straight away or opens its form
+  const instant = {
+    aList: async () => out(fmtAnalysis((await api("/Analysis")).data)),
+    sList: async () => out(fmtStock((await api("/Stock")).data)),
+    chList: async () => out(fmtChefs((await api("/Accounts/chefs")).data)),
+    cuList: async () => out(fmtCustomers((await api("/Accounts/customers")).data)),
+    msMeals: async () => out(fmtMenu("Meals", (await api("/Owner/Menu")).data.meals)),
+    msSides: async () => out(fmtMenu("Sides", (await api("/Owner/Menu")).data.sides)),
+  };
+  const needsIds = { aGet: fillAnalysisIds, aRemove: fillAnalysisIds, sRestock: fillStockIds, sGet: fillStockIds, sUse: fillStockIds, sAvail: fillStockIds, sRemove: fillStockIds, chGet: fillChefIds, chAdd: fillChefIds, chShowPw: fillChefIds, chChangePw: fillChefIds, chRemove: fillChefIds, cuGet: fillCustomerIds, cuRemove: fillCustomerIds };
+
+  document.querySelectorAll("[data-menu]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const m = btn.dataset.menu;
+      try {
+        showPanel(instant[m] ? null : m);
+        if (instant[m]) await instant[m]();
+        else if (needsIds[m]) await needsIds[m]();
+      } catch (e) { outError(e); }
+    });
+  });
+
+  async function fillAnalysisIds() {
+    const { data } = await api("/Analysis");
+    document.querySelectorAll(".aIds").forEach((s) => (s.textContent = data.map((a) => a.id).join(", ") || "(none)"));
+  }
+  async function fillStockIds() {
+    const { data } = await api("/Stock");
+    document.querySelectorAll(".sIds").forEach((s) => (s.textContent = data.map((i) => i.itemID).join(", ") || "(none)"));
+  }
+
+  // ---------- formatting ----------
+  const fmtItems = (items) =>
+    items.map((i) => `    ${i.name} ($${i.price} x ${i.quantity ?? "?"}) = $${i.price * (i.quantity ?? 0)}`).join("\n");
+
+  function fmtAnalysis(list) {
+    if (!list.length) return "No entries yet.";
+    return list.map((a) =>
+      "----------------------------------------\n" +
+      `ID: ${a.id}     Date: ${a.date}\n\n` +
+      "Meals:\n" + fmtItems(a.meals) + "\n" +
+      "Sides:\n" + fmtItems(a.sides) + "\n\n" +
+      `Sold: ${a.mealsSold} meals + ${a.sidesSold} sides = ${a.totalSold}\n` +
+      `Revenue: $${a.revenue}\n`
+    ).join("\n");
+  }
+
+  // "2026-12-31" -> whole days from today (negative = already expired)
+  function daysLeft(dateStr) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    return Math.round((new Date(y, m - 1, d) - t) / 86400000);
+  }
+  function expiryNote(dateStr) {
+    if (!dateStr) return "no expiry date";
+    const n = daysLeft(dateStr);
+    return n < 0 ? `${dateStr} (EXPIRED)` : `${dateStr} (${n} day${n === 1 ? "" : "s"} left)`;
+  }
+
+  function fmtStock(list) {
+    if (!list.length) return "No stock items.";
+    return list.map((s) =>
+      "----------------------------------------\n" +
+      `ID: ${s.itemID}     Name: ${s.itemName}\n` +
+      `Quantity: ${s.itemQuantity}\n` +
+      `Added: ${s.dateAdded ?? "-"}\n` +
+      `Expires: ${expiryNote(s.expiryDate)}\n`
+    ).join("\n");
+  }
+
+  // "Jerk Chicken:1500:8, Curry Goat:1800:4" -> [{name, price, quantity}, ...]
+  function parseItems(text) {
+    return text.split(",").map((s) => s.trim()).filter(Boolean).map((s) => {
+      const [name, price, quantity] = s.split(":");
+      return { name: name.trim(), price: Number(price), quantity: Number(quantity) };
+    });
+  }
+
+  // ---------- ANALYSIS actions ----------
+  $("aAdd").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const { data } = await post("/Analysis/items", {
+        id: $("aAddId").value.trim(),
+        meals: parseItems($("aAddMeals").value),
+        sides: parseItems($("aAddSides").value),
+      });
+      out(`Saved. Total sold: ${data.totalSold}, revenue: ${data.revenue}`);
+      $("aAdd").reset();
+    } catch (e) { outError(e); }
+  });
+
+  $("aGet").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const { data } = await api("/Analysis/" + encodeURIComponent($("aGetId").value.trim()));
+      out(fmtAnalysis([data]));
+    } catch (e) { outError(e); }
+  });
+
+  async function summary(form) {
+    const start = form.querySelector(".start").value;
+    const end = form.querySelector(".end").value;
+    return (await api(`/Summary?start=${start}&end=${end}`)).data;
+  }
+
+  $("aPopular").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const d = await summary($("aPopular"));
+      const choice = $("aPopularChoice").value;
+      const list = d[choice];
+      if (!list.length) return out(`No ${choice.endsWith("Meals") ? "meals" : "sides"} sold in that range.`);
+      const title = { topMeals: "Top meals", leastMeals: "Least popular meals", topSides: "Top sides", leastSides: "Least popular sides" }[choice];
+      out(title + ":\n" + list.map((m, i) => `  ${i + 1}. ${m.name} - ${m.quantitySold} sold`).join("\n"));
+    } catch (e) { outError(e); }
+  });
+
+  $("aTotal").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const d = await summary($("aTotal"));
+      out(`Total meals sold: ${d.totalMeals}\nTotal sides sold: ${d.totalSides}\nTotal revenue: $${d.revenue}`);
+    } catch (e) { outError(e); }
+  });
+
+  $("aRemove").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const id = $("aRemoveId").value.trim();
+    if (!confirm(`Remove entry "${id}"? This cannot be undone.`)) return;
+    try {
+      await api("/Analysis/" + encodeURIComponent(id), { method: "DELETE" });
+      out(`Removed "${id}".`);
+      $("aRemove").reset();
+      await fillAnalysisIds();
+    } catch (e) { outError(e); }
+  });
+
+  // ---------- STOCK actions ----------
+  $("sRestock").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const { data } = await post("/Stock/restock", {
+        itemID: $("sRestockId").value.trim(),
+        itemName: $("sRestockName").value.trim(),
+        quantity: Number($("sRestockQty").value),
+        expiryDate: $("sRestockExpiry").value,
+      });
+      out("Saved.\n\n" + fmtStock([data]));
+      $("sRestock").reset();
+      await fillStockIds();
+    } catch (e) { outError(e); }
+  });
+
+  $("sGet").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const { data } = await api("/Stock/" + encodeURIComponent($("sGetId").value.trim()));
+      out(fmtStock([data]));
+    } catch (e) { outError(e); }
+  });
+
+  $("sUse").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const { data } = await post(`/Stock/${encodeURIComponent($("sUseId").value.trim())}/use`, {
+        quantity: Number($("sUseQty").value),
+      });
+      out("Updated.\n\n" + fmtStock([data]));
+      $("sUse").reset();
+    } catch (e) { outError(e); }
+  });
+
+  $("sExpiring").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const days = $("sExpiringDays").value;
+      const { data } = await api(`/Stock/expiring?days=${encodeURIComponent(days)}`);
+      out(data.length ? `Expiring within ${days} day(s) (or already expired):\n\n` + fmtStock(data) : `Nothing expiring within ${days} day(s).`);
+    } catch (e) { outError(e); }
+  });
+
+  $("sAvail").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const id = $("sAvailId").value.trim();
+      const { data } = await api(`/Stock/${encodeURIComponent(id)}/available`);
+      const { data: dataName } = await api(`/Stock/${encodeURIComponent(id)}/name`)
+      out(data.available ? `"${dataName.name}" is available for meal prep.` : `"${dataName.name}" is NOT available (out of stock or expired).`);
+    } catch (e) { outError(e); }
+  });
+
+  $("sRemove").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const id = $("sRemoveId").value.trim();
+    if (!confirm(`Remove stock item "${id}"? This cannot be undone.`)) return;
+    try {
+      await api("/Stock/" + encodeURIComponent(id), { method: "DELETE" });
+      out(`Removed "${id}".`);
+      $("sRemove").reset();
+      await fillStockIds();
+    } catch (e) { outError(e); }
+  });
+
+  // ---------- ACCOUNTS (lists and single views never contain passwords) ----------
+  async function fillChefIds() {
+    const { data } = await api("/Accounts/chefs");
+    document.querySelectorAll(".chIds").forEach((s) => (s.textContent = data.map((c) => c.chefID).join(", ") || "(none)"));
+  }
+  async function fillCustomerIds() {
+    const { data } = await api("/Accounts/customers");
+    document.querySelectorAll(".cuIds").forEach((s) => (s.textContent = data.map((c) => c.customerID).join(", ") || "(none)"));
+  }
+
+  function fmtChefs(list) {
+    if (!list.length) return "No chefs yet.";
+    return list.map((c) =>
+      "----------------------------------------\n" +
+      `ID: ${c.chefID}     Name: ${c.chefName}\n`
+    ).join("\n");
+  }
+
+  function fmtCustomers(list) {
+    if (!list.length) return "No customers yet.";
+    const none = (a) => (a && a.length ? a.join(", ") : "none");
+    return list.map((c) =>
+      "----------------------------------------\n" +
+      `ID: ${c.customerID}     Name: ${c.customerName}\n` +
+      `Allergies: ${none(c.customerPreferences?.allergies)}\n` +
+      `Food preferences: ${none(c.customerPreferences?.foodPreferences)}\n`
+    ).join("\n");
+  }
+
+  const enc = (id) => encodeURIComponent(id.trim());
+
+  $("chGet").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const { data } = await api("/Accounts/chefs/" + enc($("chGetId").value));
+      out(fmtChefs([data]));
+    } catch (e) { outError(e); }
+  });
+
+  $("chAdd").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const { data } = await post("/Accounts/chefs", {
+        chefID: $("chAddId").value.trim(),
+        chefName: $("chAddName").value.trim(),
+        chefPassword: $("chAddPw").value,
+      });
+      out("Chef added.\n\n" + fmtChefs([data]));
+      $("chAdd").reset();
+      await fillChefIds();
+    } catch (e) { outError(e); }
+  });
+
+  // Shown only when asked for, and cleared as soon as you open another option.
+  $("chShowPw").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const id = $("chShowPwId").value.trim();
+      const { data } = await api(`/Accounts/chefs/${enc(id)}/password`);
+      out(`Password for chef "${id}": ${data.password}`);
+    } catch (e) { outError(e); }
+  });
+
+  $("chChangePw").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const id = $("chChangePwId").value.trim();
+      await post(`/Accounts/chefs/${enc(id)}/password`, { newPassword: $("chChangePwNew").value });
+      out(`Password changed for chef "${id}".`);
+      $("chChangePw").reset();
+    } catch (e) { outError(e); }
+  });
+
+  $("chRemove").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const id = $("chRemoveId").value.trim();
+    if (!confirm(`Remove chef "${id}"? This cannot be undone.`)) return;
+    try {
+      await api("/Accounts/chefs/" + enc(id), { method: "DELETE" });
+      out(`Removed chef "${id}".`);
+      $("chRemove").reset();
+      await fillChefIds();
+    } catch (e) { outError(e); }
+  });
+
+  $("cuGet").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const { data } = await api("/Accounts/customers/" + enc($("cuGetId").value));
+      out(fmtCustomers([data]));
+    } catch (e) { outError(e); }
+  });
+
+  $("cuRemove").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const id = $("cuRemoveId").value.trim();
+    if (!confirm(`Remove customer "${id}"? This cannot be undone.`)) return;
+    try {
+      await api("/Accounts/customers/" + enc(id), { method: "DELETE" });
+      out(`Removed customer "${id}".`);
+      $("cuRemove").reset();
+      await fillCustomerIds();
+    } catch (e) { outError(e); }
+  });
+
+  // ---------- MENU & NUTRITION (view only) ----------
+  function fmtMenu(title, list) {
+    if (!list.length) return `No ${title.toLowerCase()} on the menu yet.`;
+    const price = (p) => (p === null || p === undefined ? "-" : "$" + Number(p).toFixed(2));
+    return title + " (nutrition per 100 g):\n\n" + list.map((m) => {
+      const nutrition = m.available
+        ? `${m.calories} kcal | protein ${m.proteinG} g | carbs ${m.carbohydratesG} g | fats ${m.fatsG} g | sodium ${m.sodiumMg} mg | vitamins ${m.vitamins}`
+        : (m.message || "Nutritional information not available");
+      return "----------------------------------------\n" +
+        `Name: ${m.name}     Price: ${price(m.price)}\n` +
+        (m.details ? `Details: ${m.details}\n` : "") +
+        `Nutrition: ${nutrition}\n` +
+        `Allergens: ${m.allergens}\n`;
+    }).join("\n");
+  }
+
+  // ---------- key gate ----------
+  function lock(message) {
+    ownerKey = "";
+    sessionStorage.removeItem("ownerKey");
+    $("app").classList.add("hidden");
+    $("gate").classList.remove("hidden");
+    $("keyInput").value = "";
+    $("gateError").textContent = message || "";
+  }
+
+  async function unlock(key) {
+    ownerKey = key;
+    try {
+      await api("/verify");
+    } catch (e) { $("gateError").textContent = e.message; return; }
+    sessionStorage.setItem("ownerKey", ownerKey);
+    $("gate").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    showSection("analysis");
+  }
+
+  $("gateForm").addEventListener("submit", (ev) => { ev.preventDefault(); unlock($("keyInput").value.trim()); });
+  $("lockBtn").addEventListener("click", () => lock(""));
+  if (ownerKey) unlock(ownerKey);
+</script>
+</body>
+</html>
