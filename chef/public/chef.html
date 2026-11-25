@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chef</title>
+<style>
+  body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 0 12px; }
+  button, input, select, textarea { font: inherit; padding: 6px 10px; margin: 2px 0; }
+  input, textarea { width: 100%; box-sizing: border-box; }
+  pre { background: #f4f4f4; color: #111; padding: 10px; overflow-x: auto; white-space: pre-wrap; }
+  .hidden { display: none; }
+  .error { color: #b00020; }
+  .muted { color: #666; font-size: .9rem; }
+  label { display: block; margin-top: 8px; }
+  .tabs button { font-weight: bold; }
+  .tabs button.active { background: #222; color: #fff; }
+  .card { background: #f4f4f4; padding: 10px; white-space: pre-wrap; }
+  .order { border: 1px solid #ccc; padding: 8px 12px; margin: 10px 0; }
+  .order h3 { margin: 0 0 4px; }
+  .order ul { margin: 4px 0 8px; padding-left: 20px; }
+  .banner { background: #fff2cc; border: 2px solid #b08900; padding: 8px 12px; margin: 10px 0; font-weight: bold; }
+  .tabs .count { background: #b00020; color: #fff; border-radius: 10px; padding: 0 7px; margin-left: 4px; font-size: .85em; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0 10px; }
+</style>
+</head>
+<body>
+
+<h1>Chef</h1>
+
+<!-- Login screen -->
+<div id="gate">
+  <p>Log in with your chef ID and password:</p>
+  <form id="gateForm">
+    <label>Chef ID <input id="idInput" required autocomplete="username"></label>
+    <label>Password <input id="pwInput" type="password" required autocomplete="current-password"></label>
+    <button type="submit">Log in</button>
+  </form>
+  <p id="gateError" class="error"></p>
+  <p class="muted">Forgot your password? Contact the owner and they will set a new one for you.</p>
+</div>
+
+<div id="app" class="hidden">
+
+  <p id="who" class="muted"></p>
+  <p class="tabs">
+    <button data-section="orders" id="ordersTab">Orders</button>
+    <button data-section="account">My Account</button>
+    <button data-section="menuSec">Menu Items</button>
+    <button data-section="nutrition">Nutrition</button>
+    <button data-section="prep">Prep List</button>
+    <button id="lockBtn">Log out</button>
+  </p>
+
+  <div id="newOrderBanner" class="banner hidden" role="alert"></div>
+
+  <!-- ================= CUSTOMER ORDERS ================= -->
+  <div id="orders">
+    <p class="muted">Orders from customers appear here by themselves. Press "Mark ready" when an order is finished: the customer is told it is ready for pickup.</p>
+    <p id="ordersMsg" class="error"></p>
+    <div id="orderList"></div>
+  </div>
+
+  <!-- ================= MY ACCOUNT ================= -->
+  <div id="account" class="hidden">
+    <div id="acInfo" class="card"></div>
+  </div>
+
+  <!-- ================= MENU ITEMS ================= -->
+  <div id="menuSec" class="hidden">
+    <p>
+      <button data-menu="mnMeals">1) View All Meals</button>
+      <button data-menu="mnSides">2) View All Sides</button>
+      <button data-menu="mnGet">3) View One</button>
+      <button data-menu="mnAdd">4) Add Item</button>
+      <button data-menu="mnEdit">5) Edit Price / Details</button>
+      <button data-menu="mnRemove">6) Remove Item</button>
+    </p>
+
+    <form id="mnGet" class="hidden panel">
+      <p class="muted names"></p>
+      <label>Type <select class="kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
+      <label>Name <input class="name" required></label>
+      <button type="submit">View</button>
+    </form>
+
+    <form id="mnAdd" class="hidden panel">
+      <p class="muted names"></p>
+      <label>Type <select class="kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
+      <label>Name <input class="name" required></label>
+      <label>Description <input id="mnAddDetails"></label>
+      <label>Price <input id="mnAddPrice" type="number" min="0" step="0.01" required></label>
+      <p class="muted">Add nutrition and allergens afterwards from the Nutrition tab.</p>
+      <button type="submit">Save</button>
+    </form>
+
+    <form id="mnEdit" class="hidden panel">
+      <p class="muted names"></p>
+      <label>Type <select class="kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
+      <label>Name <input class="name" required></label>
+      <label>New price (leave blank to keep) <input id="mnEditPrice" type="number" min="0" step="0.01"></label>
+      <label>New description (leave blank to keep) <input id="mnEditDetails"></label>
+      <button type="submit">Save Changes</button>
+    </form>
+
+    <form id="mnRemove" class="hidden panel">
+      <p class="muted names"></p>
+      <label>Type <select class="kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
+      <label>Name <input class="name" required></label>
+      <button type="submit">Remove</button>
+    </form>
+  </div>
+
+  <!-- ================= NUTRITION ================= -->
+  <div id="nutrition" class="hidden">
+    <p>
+      <button data-menu="nuLabel">1) Nutrition Label</button>
+      <button data-menu="nuAdd">2) Add Nutrition</button>
+      <button data-menu="nuUpdate">3) Update Nutrition</button>
+      <button data-menu="nuAllergens">4) Set Allergens</button>
+      <button data-menu="nuRemove">5) Remove Nutrition</button>
+    </p>
+
+    <form id="nuLabel" class="hidden panel">
+      <p class="muted names"></p>
+      <label>Type <select class="kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
+      <label>Name <input class="name" required></label>
+      <label>Portion weight in grams (blank = 100) <input id="nuLabelWeight" type="number" min="1" step="any"></label>
+      <button type="submit">Show</button>
+    </form>
+
+    <form id="nuAdd" class="hidden panel">
+      <p class="muted names"></p>
+      <label>Type <select class="kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
+      <label>Name <input class="name" required></label>
+      <p class="muted">Values per 100 g. At least one must be above 0.</p>
+      <div class="facts">
+        <label>Calories <input data-fact="calories" type="number" min="0" step="any" required></label>
+        <label>Carbohydrates (g) <input data-fact="carbohydrates" type="number" min="0" step="any" required></label>
+        <label>Protein (g) <input data-fact="protein" type="number" min="0" step="any" required></label>
+        <label>Sodium (mg) <input data-fact="sodium" type="number" min="0" step="any" required></label>
+        <label>Fats (g) <input data-fact="fats" type="number" min="0" step="any" required></label>
+        <label>Vitamins <input data-fact="vitamins" type="number" min="0" step="any" required></label>
+      </div>
+      <label>Allergens (comma separated, optional) <input class="allergens" placeholder="gluten, dairy"></label>
+      <p class="muted">Allowed: gluten, dairy, eggs, peanuts, tree_nuts, soy, fish, shellfish, sesame</p>
+      <button type="submit">Save</button>
+    </form>
+
+    <form id="nuUpdate" class="hidden panel">
+      <p class="muted names"></p>
+      <label>Type <select class="kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
+      <label>Name <input class="name" required></label>
+      <p class="muted">Fill in only what you want to change (per 100 g). Blank fields stay as they are.</p>
+      <div class="facts">
+        <label>Calories <input data-fact="calories" type="number" min="0" step="any"></label>
+        <label>Carbohydrates (g) <input data-fact="carbohydrates" type="number" min="0" step="any"></label>
+        <label>Protein (g) <input data-fact="protein" type="number" min="0" step="any"></label>
+        <label>Sodium (mg) <input data-fact="sodium" type="number" min="0" step="any"></label>
+        <label>Fats (g) <input data-fact="fats" type="number" min="0" step="any"></label>
+        <label>Vitamins <input data-fact="vitamins" type="number" min="0" step="any"></label>
+      </div>
+      <label>Replace allergens (comma separated, blank = leave alone) <input class="allergens"></label>
+      <button type="submit">Update</button>
+    </form>
+
+    <form id="nuAllergens" class="hidden panel">
+      <p class="muted names"></p>
+      <label>Type <select class="kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
+      <label>Name <input class="name" required></label>
+      <label>Allergens (comma separated, blank = clear the list) <input class="allergens" placeholder="gluten, dairy"></label>
+      <p class="muted">Allowed: gluten, dairy, eggs, peanuts, tree_nuts, soy, fish, shellfish, sesame</p>
+      <button type="submit">Set Allergens</button>
+    </form>
+
+    <form id="nuRemove" class="hidden panel">
+      <p class="muted names"></p>
+      <label>Type <select class="kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
+      <label>Name <input class="name" required></label>
+      <p class="muted">Clears the nutrition values and allergens for this item.</p>
+      <button type="submit">Remove Nutrition</button>
+    </form>
+  </div>
+
+  <!-- ================= PREP LIST ================= -->
+  <div id="prep" class="hidden">
+    <p>
+      <button data-menu="prAll">1) View All Prep</button>
+      <button data-menu="prGet">2) View One</button>
+      <button data-menu="prAdd">3) Add Step</button>
+      <button data-menu="prUpdate">4) Update Step</button>
+      <button data-menu="prRemove">5) Remove Step</button>
+    </p>
+
+    <form id="prGet" class="hidden panel">
+      <p class="muted prNames"></p>
+      <label>Prep step name <input id="prGetName" required></label>
+      <button type="submit">View</button>
+    </form>
+
+    <form id="prAdd" class="hidden panel">
+      <p class="muted names"></p>
+      <p class="muted prNames"></p>
+      <label>Belongs to <select class="kind"><option value="meal">Meal</option><option value="side">Side</option></select></label>
+      <label>Meal / side name <input class="name" required></label>
+      <label>Prep step name (must be unique) <input id="prAddName" required></label>
+      <label>Type <input id="prAddType" required placeholder="e.g. chopping, marinating"></label>
+      <label>Quantity <input id="prAddQty" type="number" min="0" step="any" required></label>
+      <label>Steps <textarea id="prAddSteps" rows="4" required></textarea></label>
+      <button type="submit">Save</button>
+    </form>
+
+    <form id="prUpdate" class="hidden panel">
+      <p class="muted prNames"></p>
+      <label>Current prep step name <input id="prUpdateName" required></label>
+      <p class="muted">Fill in only what you want to change.</p>
+      <label>New name <input id="prUpdateNewName"></label>
+      <label>Type <input id="prUpdateType"></label>
+      <label>Quantity <input id="prUpdateQty" type="number" min="0" step="any"></label>
+      <label>Steps <textarea id="prUpdateSteps" rows="4"></textarea></label>
+      <button type="submit">Update</button>
+    </form>
+
+    <form id="prRemove" class="hidden panel">
+      <p class="muted prNames"></p>
+      <label>Prep step name to remove <input id="prRemoveName" required></label>
+      <button type="submit">Remove</button>
+    </form>
+  </div>
+
+  <pre id="out"></pre>
+</div>
+
+<script>
+  // Leave empty when this page is served by your server. Otherwise put the server address here.
+  const API_BASE = "";
+
+  const $ = (id) => document.getElementById(id);
+  let token = sessionStorage.getItem("chefToken") || "";
+
+  async function api(path, options = {}) {
+    const res = await fetch(API_BASE + path, {
+      ...options,
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    });
+    const body = res.status === 204 ? {} : await res.json().catch(() => ({}));
+    if (res.status === 401) { lock(body.message || "Please log in again."); throw new Error(body.message || "Please log in again."); }
+    if (!res.ok) throw new Error(body.message || "Something went wrong");
+    return body;
+  }
+  const send = (method, path, obj) => api(path, { method, body: obj === undefined ? undefined : JSON.stringify(obj) });
+
+  const out = (text) => { $("out").className = ""; $("out").textContent = text; };
+  const outError = (e) => { $("out").className = "error"; $("out").textContent = e.message; };
+
+  // ---------- sections and menus ----------
+  const SECTIONS = ["orders", "account", "menuSec", "nutrition", "prep"];
+  const PANELS = [...document.querySelectorAll(".panel")].map((p) => p.id);
+
+  function showPanel(name) {
+    PANELS.forEach((p) => $(p).classList.toggle("hidden", p !== name));
+    $("out").textContent = "";
+  }
+  function showSection(name) {
+    SECTIONS.forEach((s) => $(s).classList.toggle("hidden", s !== name));
+    document.querySelectorAll("[data-section]").forEach((b) => b.classList.toggle("active", b.dataset.section === name));
+    showPanel(null);
+  }
+  document.querySelectorAll("[data-section]").forEach((b) =>
+    b.addEventListener("click", () => {
+      showSection(b.dataset.section);
+      if (b.dataset.section === "orders") $("newOrderBanner").classList.add("hidden");
+    }));
+
+  // Buttons that run straight away
+  const instant = {
+    mnMeals: async () => out(fmtDishes("Meals", (await api("/Chef/Menu/meal")).data)),
+    mnSides: async () => out(fmtDishes("Sides", (await api("/Chef/Menu/side")).data)),
+    prAll: async () => out(fmtPreps((await api("/Chef/Prep")).data)),
+  };
+
+  // Forms that show the existing names to help the chef
+  const showsDishNames = ["mnGet", "mnAdd", "mnEdit", "mnRemove", "nuLabel", "nuAdd", "nuUpdate", "nuAllergens", "nuRemove", "prAdd"];
+  const showsPrepNames = ["prGet", "prAdd", "prUpdate", "prRemove"];
+
+  async function fillDishNames() {
+    const [meals, sides] = await Promise.all([api("/Chef/Menu/meal"), api("/Chef/Menu/side")]);
+    const list = (a) => a.data.map((d) => d.name).join(", ") || "(none)";
+    const line = `Meals: ${list(meals)}  |  Sides: ${list(sides)}`;
+    document.querySelectorAll(".names").forEach((s) => (s.textContent = line));
+  }
+  async function fillPrepNames() {
+    const { data } = await api("/Chef/Prep");
+    const line = "Prep steps: " + (data.map((p) => p.itemName).join(", ") || "(none)");
+    document.querySelectorAll(".prNames").forEach((s) => (s.textContent = line));
+  }
+
+  document.querySelectorAll("[data-menu]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const m = btn.dataset.menu;
+      try {
+        showPanel(instant[m] ? null : m);
+        if (instant[m]) { await instant[m](); return; }
+        if (showsDishNames.includes(m)) await fillDishNames();
+        if (showsPrepNames.includes(m)) await fillPrepNames();
+      } catch (e) { outError(e); }
+    });
+  });
+
+  // ---------- formatting ----------
+  const FACTS = ["calories", "carbohydrates", "protein", "sodium", "fats", "vitamins"];
+  const hasNutrition = (d) => FACTS.some((k) => d[k] > 0);
+
+  function fmtDish(d) {
+    return "----------------------------------------\n" +
+      `Name: ${d.name}     Price: $${Number(d.price).toFixed(2)}\n` +
+      (d.details ? `Details: ${d.details}\n` : "") +
+      (hasNutrition(d)
+        ? `Per 100 g: ${d.calories} kcal | protein ${d.protein} g | carbs ${d.carbohydrates} g | fats ${d.fats} g | sodium ${d.sodium} mg | vitamins ${d.vitamins}\n`
+        : "Nutrition: not recorded\n") +
+      `Allergens: ${d.allergens && d.allergens.length ? d.allergens.join(", ") : "none recorded"}\n` +
+      fmtPrepList(d.prepList);
+  }
+  function fmtPrepList(list) {
+    if (!list || !list.length) return "Prep list: no prep steps are attached to this item\n";
+    return "Prep list:\n" + list.map((p, i) =>
+      `  ${i + 1}. ${p.itemName} (${p.type}, quantity ${p.itemQuantity})\n     ${p.steps}\n`
+    ).join("");
+  }
+  const fmtDishes = (title, list) =>
+    list.length ? title + ":\n\n" + list.map(fmtDish).join("\n") : `No ${title.toLowerCase()} yet.`;
+
+  function fmtLabel(v) {
+    if (!v.available) return `${v.name}\n${v.message}\nAllergens: ${v.allergens}`;
+    return `${v.name} - ${v.weightG} g portion\n` +
+      `Calories: ${v.calories} kcal\nProtein: ${v.proteinG} g\nCarbohydrates: ${v.carbohydratesG} g\n` +
+      `Fats: ${v.fatsG} g\nSodium: ${v.sodiumMg} mg\nVitamins: ${v.vitamins}\nAllergens: ${v.allergens}`;
+  }
+
+  function fmtPreps(list) {
+    if (!list.length) return "No prep steps yet.";
+    return list.map((p) =>
+      "----------------------------------------\n" +
+      `Name: ${p.itemName}     Type: ${p.type}     Quantity: ${p.itemQuantity}\n` +
+      `Belongs to: ${p.belongsTo ?? "not attached to any meal or side"}\n` +
+      `Steps: ${p.steps}\n`
+    ).join("\n");
+  }
+
+  // ---------- form helpers ----------
+  const onSubmit = (id, fn) => $(id).addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try { await fn($(id)); } catch (e) { outError(e); }
+  });
+  const target = (form) => {
+    const kind = form.querySelector(".kind").value;
+    const name = form.querySelector(".name").value.trim();
+    return { kind, name, path: `${kind}/${encodeURIComponent(name)}` };
+  };
+  const readFacts = (form) => {
+    const facts = {};
+    form.querySelectorAll("[data-fact]").forEach((i) => { if (i.value !== "") facts[i.dataset.fact] = Number(i.value); });
+    return facts;
+  };
+  const readAllergens = (form) =>
+    form.querySelector(".allergens").value.split(",").map((s) => s.trim()).filter(Boolean);
+
+  // ---------- MENU ITEMS ----------
+  onSubmit("mnGet", async (form) => {
+    const t = target(form);
+    out(fmtDish((await api(`/Chef/Menu/${t.path}`)).data));
+  });
+
+  onSubmit("mnAdd", async (form) => {
+    const t = target(form);
+    const { data } = await send("POST", "/Chef/Menu", {
+      kind: t.kind, name: t.name, details: $("mnAddDetails").value, price: Number($("mnAddPrice").value),
+    });
+    out("Saved.\n\n" + fmtDish(data));
+    form.reset();
+    await fillDishNames();
+  });
+
+  onSubmit("mnEdit", async (form) => {
+    const t = target(form);
+    const body = {};
+    if ($("mnEditPrice").value !== "") body.price = Number($("mnEditPrice").value);
+    if ($("mnEditDetails").value.trim() !== "") body.details = $("mnEditDetails").value;
+    const { data } = await send("PUT", `/Chef/Menu/${t.path}`, body);
+    out("Updated.\n\n" + fmtDish(data));
+  });
+
+  onSubmit("mnRemove", async (form) => {
+    const t = target(form);
+    if (!confirm(`Remove ${t.kind} "${t.name}"? Its prep steps will be removed too. This cannot be undone.`)) return;
+    await send("DELETE", `/Chef/Menu/${t.path}`);
+    out(`Removed ${t.kind} "${t.name}".`);
+    form.reset();
+    await fillDishNames();
+  });
+
+  // ---------- NUTRITION ----------
+  onSubmit("nuLabel", async (form) => {
+    const t = target(form);
+    const w = $("nuLabelWeight").value;
+    const { data } = await api(`/Chef/Nutrition/${t.path}` + (w ? `?weight=${encodeURIComponent(w)}` : ""));
+    out(fmtLabel(data));
+  });
+
+  onSubmit("nuAdd", async (form) => {
+    const t = target(form);
+    const allergens = readAllergens(form);
+    const { data } = await send("POST", `/Chef/Nutrition/${t.path}`, { facts: readFacts(form), allergens: allergens.length ? allergens : undefined });
+    out("Nutrition added.\n\n" + fmtDish(data));
+    form.reset();
+  });
+
+  onSubmit("nuUpdate", async (form) => {
+    const t = target(form);
+    const allergenText = form.querySelector(".allergens").value.trim();
+    const body = { facts: readFacts(form) };
+    if (allergenText) body.allergens = readAllergens(form);
+    const { data } = await send("PUT", `/Chef/Nutrition/${t.path}`, body);
+    out("Nutrition updated.\n\n" + fmtDish(data));
+    form.reset();
+  });
+
+  onSubmit("nuAllergens", async (form) => {
+    const t = target(form);
+    const { data } = await send("PUT", `/Chef/Allergens/${t.path}`, { allergens: readAllergens(form) });
+    out("Allergens saved.\n\n" + fmtDish(data));
+    form.reset();
+  });
+
+  onSubmit("nuRemove", async (form) => {
+    const t = target(form);
+    if (!confirm(`Clear the nutrition values and allergens for ${t.kind} "${t.name}"?`)) return;
+    await send("DELETE", `/Chef/Nutrition/${t.path}`);
+    out(`Nutrition removed for ${t.kind} "${t.name}".`);
+    form.reset();
+  });
+
+  // ---------- PREP LIST ----------
+  onSubmit("prGet", async () => {
+    out(fmtPreps([(await api("/Chef/Prep/" + encodeURIComponent($("prGetName").value.trim()))).data]));
+  });
+
+  onSubmit("prAdd", async (form) => {
+    const t = target(form);
+    const { data } = await send("POST", "/Chef/Prep", {
+      kind: t.kind, dishName: t.name,
+      itemName: $("prAddName").value.trim(), type: $("prAddType").value.trim(),
+      itemQuantity: Number($("prAddQty").value), steps: $("prAddSteps").value.trim(),
+    });
+    out(`Prep step added to ${t.kind} "${t.name}".\n\n` + fmtPreps([data]));
+    form.reset();
+    await fillPrepNames();
+  });
+
+  onSubmit("prUpdate", async (form) => {
+    const body = {};
+    if ($("prUpdateNewName").value.trim()) body.itemName = $("prUpdateNewName").value.trim();
+    if ($("prUpdateType").value.trim()) body.type = $("prUpdateType").value.trim();
+    if ($("prUpdateQty").value !== "") body.itemQuantity = Number($("prUpdateQty").value);
+    if ($("prUpdateSteps").value.trim()) body.steps = $("prUpdateSteps").value.trim();
+    const { data } = await send("PUT", "/Chef/Prep/" + encodeURIComponent($("prUpdateName").value.trim()), body);
+    out("Prep step updated.\n\n" + fmtPreps([data]));
+    form.reset();
+    await fillPrepNames();
+  });
+
+  onSubmit("prRemove", async (form) => {
+    const name = $("prRemoveName").value.trim();
+    if (!confirm(`Remove prep step "${name}"? This cannot be undone.`)) return;
+    await send("DELETE", "/Chef/Prep/" + encodeURIComponent(name));
+    out(`Removed prep step "${name}".`);
+    form.reset();
+    await fillPrepNames();
+  });
+
+
+  // ---------- customer orders ----------
+  const el = (tag, text, cls) => { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; };
+  const money = (n) => "$" + Number(n).toFixed(2);
+  let seenOrders = null;       // order numbers already shown; null until the first load
+  let ordersPoller = null;
+  let unseenNew = 0;
+
+  function renderOrders(list) {
+    const box = $("orderList"); box.replaceChildren();
+    if (!list.length) box.appendChild(el("p", "No orders waiting. New orders will appear here."));
+    list.forEach((o) => {
+      const card = el("div", undefined, "order");
+      const when = new Date(o.placedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      card.appendChild(el("h3", `Order #${o.orderNumber} - ${o.customerName} (${when})`));
+      const items = el("ul");
+      o.items.forEach((i) => items.appendChild(el("li", `${i.quantity} x ${i.name} (${i.kind})`)));
+      card.appendChild(items);
+      if (o.tasks.length) {
+        card.appendChild(el("div", "Prep:", "muted"));
+        const tasks = el("ul");
+        o.tasks.forEach((t) => tasks.appendChild(el("li", `${t.quantity} x ${t.ingredient} for ${t.dish}${t.steps ? " - " + t.steps : ""}`)));
+        card.appendChild(tasks);
+      }
+      const btn = el("button", "Mark ready"); btn.type = "button";
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        try {
+          await send("POST", `/Chef/Orders/${o.orderNumber}/ready`);
+          $("ordersMsg").textContent = "";
+          await loadOrders();
+        } catch (e) { btn.disabled = false; $("ordersMsg").textContent = e.message; }
+      });
+      card.appendChild(btn);
+      box.appendChild(card);
+    });
+  }
+
+  function updateOrderBadge(count) {
+    const tab = $("ordersTab"); tab.replaceChildren(document.createTextNode("Orders"));
+    if (count) tab.appendChild(el("span", String(count), "count"));
+    document.title = count ? `(${count}) Chef` : "Chef";
+  }
+
+  async function loadOrders() {
+    try {
+      const { data } = await api("/Chef/Orders");
+      const fresh = seenOrders ? data.filter((o) => !seenOrders.has(o.orderNumber)) : [];
+      seenOrders = new Set(data.map((o) => o.orderNumber));
+      renderOrders(data);
+      updateOrderBadge(data.length);
+      if (fresh.length) {
+        unseenNew += fresh.length;
+        const b = $("newOrderBanner");
+        b.textContent = "New order: " + fresh.map((o) => "#" + o.orderNumber).join(", ");
+        b.classList.remove("hidden");
+      }
+      $("ordersMsg").textContent = "";
+    } catch (e) { $("ordersMsg").textContent = e.message; }
+  }
+  $("newOrderBanner").addEventListener("click", () => { $("newOrderBanner").classList.add("hidden"); showSection("orders"); });
+  const startOrderPolling = () => { stopOrderPolling(); seenOrders = null; loadOrders(); ordersPoller = setInterval(loadOrders, 5000); };
+  const stopOrderPolling = () => { if (ordersPoller) clearInterval(ordersPoller); ordersPoller = null; };
+
+  // ---------- login ----------
+  function lock(message) {
+    stopOrderPolling();
+    token = "";
+    sessionStorage.removeItem("chefToken");
+    $("app").classList.add("hidden");
+    $("gate").classList.remove("hidden");
+    $("pwInput").value = "";
+    $("gateError").textContent = message || "";
+  }
+
+  async function enter() {
+    const { data } = await api("/Chef/me");
+    $("who").textContent = `Logged in as ${data.chefName} (${data.chefID})`;
+    const c = data.ownerContact || {};
+    const contact = [c.email && `Email: ${c.email}`, c.phone && `Phone: ${c.phone}`].filter(Boolean);
+    $("acInfo").textContent =
+      `Chef ID: ${data.chefID}\nName: ${data.chefName}\n\n` +
+      "Need your password changed?\n" +
+      "For security, chefs can't change their own password. Contact the owner and they will set a new one and tell you what to use to log in.\n\n" +
+      (contact.length ? contact.join("\n") : "Ask the owner for their contact details.");
+    $("gate").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    showSection("orders");
+    startOrderPolling();
+  }
+
+  $("gateForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    $("gateError").textContent = "";
+    try {
+      const res = await fetch(API_BASE + "/Chef/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chefID: $("idInput").value.trim(), password: $("pwInput").value }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.message || "Could not log in");
+      token = body.data.token;
+      sessionStorage.setItem("chefToken", token);
+      $("pwInput").value = "";
+      await enter();
+    } catch (e) { $("gateError").textContent = e.message; }
+  });
+
+  $("lockBtn").addEventListener("click", () => lock(""));
+  if (token) enter().catch(() => {});   // stays logged in while this browser tab is open
+</script>
+</body>
+</html>
