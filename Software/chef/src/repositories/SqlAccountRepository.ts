@@ -2,9 +2,8 @@ import { supabase } from "../config/supabase.js";
 import { customer } from "../models/accountsModels.js";
 import { chef } from "../models/accountsModels.js";
 import { IChefRepo } from "../interfaces/IChefRepo.js";
-import { ICustomerRepo } from "../interfaces/ICustomerRepo.js";
 
-export class SqlAccountRepository implements IChefRepo, ICustomerRepo {
+export class SqlAccountRepository implements IChefRepo {
     async AddCustomer(customer: customer): Promise<void> {
         const { error } = await supabase
         .from("Customer")
