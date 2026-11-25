@@ -18,7 +18,7 @@ const SIDES = "SqlRepositorySides";
 const PREP = "Prep";
 type DishTable = typeof MEALS | typeof SIDES;
 
-const DISH_SELECT = "*, prep(*)"; // pulls prepList in one query
+const DISH_SELECT = "*, Prep(*)"; // pulls prepList in one query
 
 export class SqlMSRepository
   implements IMenuRepository, INutritionRepository, IPreplistRepository, IOwnerNutritionServiceRepo

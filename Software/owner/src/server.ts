@@ -13,6 +13,10 @@ import { StockManagement } from './mainClasses/StockManagement';
 import { createStockRouter } from './routes/stockRouting';
 import { SqlAccountRepository } from './repositories/SqlAccountRepository';
 import { createAccountsRouter } from './routes/accountsRouting';
+import { supabase } from './config/supabase';
+import { SqlMSRepository } from './repositories/SqlMSRepository';
+import { NutritionInformation } from './mainClasses/NutritionInformation';
+import { createOwnerMenuRouter } from './routes/ownerMenuRouting';
 
 
 const app = express();
@@ -23,6 +27,8 @@ const stockAnalysis = new StockAnalysis(repo);
 const stockRepo: IStockRepository = new SqlStockRepository(pool);
 const stockManagement: IStockService = new StockManagement(stockRepo);
 const accountRepo = new SqlAccountRepository();
+const msRepo = new SqlMSRepository(supabase);
+const nutrition = new NutritionInformation(msRepo, msRepo);
 
 app.set('trust proxy', 1);                       // needed on most hosts so req.ip is the real visitor
 app.use(express.json());
@@ -38,6 +44,7 @@ app.get('/health', async (_req, res) => {
 app.use('/', createRouter(stockAnalysis));
 app.use('/', createStockRouter(stockManagement)); 
 app.use('/', createAccountsRouter(accountRepo));
+app.use('/', createOwnerMenuRouter(nutrition));
 
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

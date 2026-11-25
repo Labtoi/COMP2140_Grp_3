@@ -36,6 +36,7 @@
     <button id="tabAnalysis" data-section="analysis">Analysis</button>
     <button id="tabStock" data-section="stock">Stock Management</button>
     <button id="tabAccounts" data-section="accounts">Accounts</button>
+    <button id="tabMenu" data-section="menu">Menu &amp; Nutrition</button>
     <button id="lockBtn">Quit</button>
   </p>
 
@@ -207,6 +208,15 @@
     </form>
   </div>
 
+  <!-- ================= MENU & NUTRITION ================= -->
+  <div id="menu" class="hidden">
+    <p>
+      <button data-menu="msMeals">1) View All Meals</button>
+      <button data-menu="msSides">2) View All Sides</button>
+    </p>
+    <p class="muted">View only. Nutrition values are shown per 100 g.</p>
+  </div>
+
   <pre id="out"></pre>
 </div>
 
@@ -244,9 +254,11 @@
     $("analysis").classList.toggle("hidden", name !== "analysis");
     $("stock").classList.toggle("hidden", name !== "stock");
     $("accounts").classList.toggle("hidden", name !== "accounts");
+    $("menu").classList.toggle("hidden", name !== "menu");
     $("tabAnalysis").classList.toggle("active", name === "analysis");
     $("tabStock").classList.toggle("active", name === "stock");
     $("tabAccounts").classList.toggle("active", name === "accounts");
+    $("tabMenu").classList.toggle("active", name === "menu");
     showPanel(null);
   }
   document.querySelectorAll("[data-section]").forEach((b) =>
@@ -258,6 +270,8 @@
     sList: async () => out(fmtStock((await api("/Stock")).data)),
     chList: async () => out(fmtChefs((await api("/Accounts/chefs")).data)),
     cuList: async () => out(fmtCustomers((await api("/Accounts/customers")).data)),
+    msMeals: async () => out(fmtMenu("Meals", (await api("/Owner/Menu")).data.meals)),
+    msSides: async () => out(fmtMenu("Sides", (await api("/Owner/Menu")).data.sides)),
   };
   const needsIds = { aGet: fillAnalysisIds, aRemove: fillAnalysisIds, sRestock: fillStockIds, sGet: fillStockIds, sUse: fillStockIds, sAvail: fillStockIds, sRemove: fillStockIds, chGet: fillChefIds, chAdd: fillChefIds, chShowPw: fillChefIds, chChangePw: fillChefIds, chRemove: fillChefIds, cuGet: fillCustomerIds, cuRemove: fillCustomerIds };
 
@@ -558,6 +572,22 @@
       await fillCustomerIds();
     } catch (e) { outError(e); }
   });
+
+  // ---------- MENU & NUTRITION (view only) ----------
+  function fmtMenu(title, list) {
+    if (!list.length) return `No ${title.toLowerCase()} on the menu yet.`;
+    const price = (p) => (p === null || p === undefined ? "-" : "$" + Number(p).toFixed(2));
+    return title + " (nutrition per 100 g):\n\n" + list.map((m) => {
+      const nutrition = m.available
+        ? `${m.calories} kcal | protein ${m.proteinG} g | carbs ${m.carbohydratesG} g | fats ${m.fatsG} g | sodium ${m.sodiumMg} mg | vitamins ${m.vitamins}`
+        : (m.message || "Nutritional information not available");
+      return "----------------------------------------\n" +
+        `Name: ${m.name}     Price: ${price(m.price)}\n` +
+        (m.details ? `Details: ${m.details}\n` : "") +
+        `Nutrition: ${nutrition}\n` +
+        `Allergens: ${m.allergens}\n`;
+    }).join("\n");
+  }
 
   // ---------- key gate ----------
   function lock(message) {
