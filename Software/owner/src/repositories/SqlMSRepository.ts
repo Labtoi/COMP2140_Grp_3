@@ -13,8 +13,8 @@ import {
 } from "../models/MSModels";
 
 /** The two Supabase tables that back SqlDatabaseMeals / SqlDatabaseSides. */
-const MEALS = "SqlRepositoryMeals";
-const SIDES = "SqlRepositorySides";
+const MEALS = "SqlDatabaseMeals";
+const SIDES = "SqlDatabaseSides";
 const PREP = "Prep";
 type DishTable = typeof MEALS | typeof SIDES;
 
