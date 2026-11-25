@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Customer</title>
+<style>
+  body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 0 12px; }
+  button, input, select { font: inherit; padding: 6px 10px; margin: 2px 0; }
+  input { width: 100%; box-sizing: border-box; }
+  pre { background: #f4f4f4; color: #111; padding: 10px; overflow-x: auto; white-space: pre-wrap; }
+  .hidden { display: none; }
+  .error { color: #b00020; }
+  .ok { color: #1b6e2d; }
+  label { display: block; margin-top: 8px; }
+  .tabs button { font-weight: bold; }
+  .tabs button.active { background: #222; color: #fff; }
+  .card { border: 1px solid #ccc; padding: 10px 14px; margin: 12px 0; }
+</style>
+</head>
+<body>
+
+<h1>Customer</h1>
+
+<!-- ================= HOME: log in / sign up ================= -->
+<div id="gate">
+  <p class="tabs">
+    <button id="tabLogin" type="button">Log In</button>
+    <button id="tabSignup" type="button">Sign Up</button>
+  </p>
+
+  <form id="loginForm" class="card" autocomplete="on">
+    <p>Log in to your account:</p>
+    <label>Customer ID <input id="loginId" required autocomplete="username"></label>
+    <label>Password <input id="loginPw" type="password" required autocomplete="current-password"></label>
+    <button type="submit">Log In</button>
+  </form>
+
+  <form id="signupForm" class="card hidden" autocomplete="off">
+    <p>Create a new account:</p>
+    <label>Customer ID <input id="suId" required maxlength="50"></label>
+    <label>Name <input id="suName" required maxlength="100"></label>
+    <label>Password (at least 6 characters) <input id="suPw" type="password" minlength="6" required autocomplete="new-password"></label>
+    <label>Confirm password <input id="suPw2" type="password" minlength="6" required autocomplete="new-password"></label>
+    <label>Allergies (separate with commas, optional) <input id="suAllergies" placeholder="peanuts, shellfish"></label>
+    <label>Food preferences (separate with commas, optional) <input id="suPrefs" placeholder="spicy, vegetarian"></label>
+    <button type="submit">Sign Up</button>
+  </form>
+
+  <p id="gateMsg"></p>
+</div>
+
+<!-- ================= LOGGED IN ================= -->
+<div id="app" class="hidden">
+
+  <p class="tabs">
+    <button data-menu="mView">1) My Account</button>
+    <button data-menu="mEdit">2) Edit Info</button>
+    <button data-menu="mPw">3) Change Password</button>
+    <button data-menu="mDelete">4) Delete Account</button>
+    <button id="logoutBtn">Log Out</button>
+  </p>
+
+  <form id="mEdit" class="hidden panel" autocomplete="off">
+    <p>Your customer ID (<b class="myId"></b>) can't be changed.</p>
+    <label>Name <input id="mEditName" required maxlength="100"></label>
+    <label>Allergies (separate with commas) <input id="mEditAllergies"></label>
+    <label>Food preferences (separate with commas) <input id="mEditPrefs"></label>
+    <label>Enter your password to save these changes <input id="mEditPw" type="password" required autocomplete="current-password"></label>
+    <button type="submit">Save Changes</button>
+  </form>
+
+  <form id="mPw" class="hidden panel" autocomplete="off">
+    <label>Current password <input id="mPwCurrent" type="password" required autocomplete="current-password"></label>
+    <label>New password (at least 6 characters) <input id="mPwNew" type="password" minlength="6" required autocomplete="new-password"></label>
+    <label>Confirm new password <input id="mPwNew2" type="password" minlength="6" required autocomplete="new-password"></label>
+    <button type="submit">Change Password</button>
+  </form>
+
+  <form id="mDelete" class="hidden panel" autocomplete="off">
+    <p class="error">This permanently deletes your account (<b class="myId"></b>) and cannot be undone.</p>
+    <label>Enter your password to confirm <input id="mDeletePw" type="password" required autocomplete="current-password"></label>
+    <button type="submit">Delete My Account</button>
+  </form>
+
+  <pre id="out"></pre>
+</div>
+
+<script>
+  // Leave empty when this page is served by your server. Otherwise put the server address here.
+  const API_BASE = "";
+
+  const $ = (id) => document.getElementById(id);
+  let token = sessionStorage.getItem("customerToken") || "";
+
+  async function api(path, options = {}) {
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
+    const res = await fetch(API_BASE + path, { ...options, headers });
+    const body = await res.json().catch(() => ({}));
+    // 401 = bad login or expired session. (A wrong password on an edit is 403, so it doesn't log you out.)
+    if (res.status === 401) { lock(body.message); throw new Error(body.message); }
+    if (!res.ok) throw new Error(body.message || "Something went wrong");
+    return body;
+  }
+  const post = (path, obj) => api(path, { method: "POST", body: JSON.stringify(obj) });
+
+  const out = (text) => { $("out").className = ""; $("out").textContent = text; };
+  const outError = (e) => { $("out").className = "error"; $("out").textContent = e.message; };
+  const gateMsg = (text, isError = true) => { $("gateMsg").className = isError ? "error" : "ok"; $("gateMsg").textContent = text || ""; };
+
+  const list = (text) => text.split(",").map((s) => s.trim()).filter(Boolean);
+  const none = (a) => (a && a.length ? a.join(", ") : "none");
+  let me = null;
+
+  const fmtMe = (c) =>
+    `ID: ${c.customerID}\nName: ${c.customerName}\n` +
+    `Allergies: ${none(c.customerPreferences?.allergies)}\n` +
+    `Food preferences: ${none(c.customerPreferences?.foodPreferences)}`;
+
+  // ---------- home tabs ----------
+  function showGateTab(name) {
+    $("loginForm").classList.toggle("hidden", name !== "login");
+    $("signupForm").classList.toggle("hidden", name !== "signup");
+    $("tabLogin").classList.toggle("active", name === "login");
+    $("tabSignup").classList.toggle("active", name === "signup");
+    gateMsg("");
+  }
+  $("tabLogin").addEventListener("click", () => showGateTab("login"));
+  $("tabSignup").addEventListener("click", () => showGateTab("signup"));
+
+  // ---------- menu / panels ----------
+  const PANELS = [...document.querySelectorAll(".panel")].map((p) => p.id);
+  function showPanel(name) {
+    PANELS.forEach((p) => $(p).classList.toggle("hidden", p !== name));
+    document.querySelectorAll("[data-menu]").forEach((b) => b.classList.toggle("active", b.dataset.menu === name));
+    $("out").textContent = "";
+  }
+
+  async function loadMe() {
+    me = (await api("/Customer/me")).data;
+    document.querySelectorAll(".myId").forEach((s) => (s.textContent = me.customerID));
+    return me;
+  }
+
+  document.querySelectorAll("[data-menu]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const m = btn.dataset.menu;
+      try {
+        if (m === "mView") { showPanel(null); btn.classList.add("active"); out(fmtMe(await loadMe())); return; }
+        showPanel(m);
+        await loadMe();
+        if (m === "mEdit") {
+          $("mEditName").value = me.customerName;
+          $("mEditAllergies").value = me.customerPreferences.allergies.join(", ");
+          $("mEditPrefs").value = me.customerPreferences.foodPreferences.join(", ");
+        }
+      } catch (e) { outError(e); }
+    });
+  });
+
+  // ---------- sign up ----------
+  $("signupForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if ($("suPw").value !== $("suPw2").value) return gateMsg("The two passwords don't match.");
+    try {
+      const id = $("suId").value.trim();
+      await post("/Customer/signup", {
+        customerID: id,
+        customerName: $("suName").value.trim(),
+        customerPassword: $("suPw").value,
+        customerPreferences: { allergies: list($("suAllergies").value), foodPreferences: list($("suPrefs").value) },
+      });
+      $("signupForm").reset();
+      showGateTab("login");
+      $("loginId").value = id;
+      gateMsg(`Account "${id}" created. Please log in.`, false);
+    } catch (e) { gateMsg(e.message); }
+  });
+
+  // ---------- log in / out ----------
+  $("loginForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const body = await post("/Customer/login", {
+        customerID: $("loginId").value.trim(),
+        customerPassword: $("loginPw").value,
+      });
+      token = body.token;
+      sessionStorage.setItem("customerToken", token);
+      $("loginForm").reset();
+      enterApp(body.data);
+    } catch (e) { gateMsg(e.message); }
+  });
+
+  function enterApp(customer) {
+    me = customer;
+    document.querySelectorAll(".myId").forEach((s) => (s.textContent = me.customerID));
+    $("gate").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    showPanel(null);
+    out(`Welcome, ${me.customerName}!\n\n` + fmtMe(me));
+  }
+
+  function lock(message) {
+    token = "";
+    me = null;
+    sessionStorage.removeItem("customerToken");
+    document.querySelectorAll("#app form").forEach((f) => f.reset());
+    $("app").classList.add("hidden");
+    $("gate").classList.remove("hidden");
+    showGateTab("login");
+    gateMsg(message || "");
+  }
+
+  $("logoutBtn").addEventListener("click", async () => {
+    try { await post("/Customer/logout", {}); } catch (e) { /* already logged out */ }
+    lock("You have been logged out.");
+    $("gateMsg").className = "ok";
+  });
+
+  // ---------- edit info (needs password) ----------
+  $("mEdit").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    try {
+      const { data } = await post("/Customer/me/edit", {
+        customerName: $("mEditName").value.trim(),
+        customerPreferences: { allergies: list($("mEditAllergies").value), foodPreferences: list($("mEditPrefs").value) },
+        password: $("mEditPw").value,
+      });
+      me = data;
+      $("mEditPw").value = "";
+      out("Saved.\n\n" + fmtMe(data));
+    } catch (e) { outError(e); }
+  });
+
+  // ---------- change password (needs current password) ----------
+  $("mPw").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if ($("mPwNew").value !== $("mPwNew2").value) return outError(new Error("The two new passwords don't match."));
+    try {
+      await post("/Customer/me/password", { password: $("mPwCurrent").value, newPassword: $("mPwNew").value });
+      $("mPw").reset();
+      out("Password changed.");
+    } catch (e) { outError(e); }
+  });
+
+  // ---------- delete account (needs password) ----------
+  $("mDelete").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (!confirm(`Delete account "${me?.customerID}"? This cannot be undone.`)) return;
+    try {
+      const id = me?.customerID;
+      await post("/Customer/me/delete", { password: $("mDeletePw").value });
+      lock(`Account "${id}" was deleted.`);
+      $("gateMsg").className = "ok";
+    } catch (e) { outError(e); }
+  });
+
+  // ---------- start ----------
+  showGateTab("login");
+  if (token) {
+    loadMe().then(enterApp).catch(() => lock(""));
+  }
+</script>
+</body>
+</html>
