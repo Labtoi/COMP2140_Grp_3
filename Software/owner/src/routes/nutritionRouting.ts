@@ -3,12 +3,12 @@ import {
   NutritionInformation, NotFoundError, UnauthorizedError, ValidationError, parseKind,
 } from '../mainClasses/NutritionInformation';
 import type { Actor } from '../mainClasses/NutritionInformation';
-// PLACEHOLDER until the Authentication & Authorization component exists (DC-7):
-// the browser sends "x-role: chef". This is NOT secure and must be replaced by real login/sessions.
-function getActor(req: Request): Actor {
-  const role = req.header('x-role');
-  return role === 'chef' || role === 'owner' ? { id: role, role } : { id: 'guest', role: 'customer' };
-}
+import { requireOwnerKey } from '../middleware/ownerAuth';
+
+// Once requireOwnerKey has passed, the caller has proven they hold the owner key,
+// so the service is told they are the owner. The service still runs its own
+// canEdit check as a second line of defence.
+const ownerActor: Actor = { id: 'owner', role: 'owner' };
 
 export function createNutritionRouter(service: NutritionInformation): Router {
   const router = Router();
@@ -26,17 +26,12 @@ export function createNutritionRouter(service: NutritionInformation): Router {
     }
   };
 
+  // ---------------- public (customers can read) ----------------
+
   // List meals or sides (kind = "meal" | "side")
   router.get('/Menu/:kind', async (req: Request, res: Response) => {
     try {
       res.status(200).json({ success: true, data: await service.getAll(parseKind(String(req.params.kind))) });
-    } catch (error) { fail(res, error); }
-  });
-
-  // Create a menu item (chef or owner only)
-  router.post('/Menu', async (req: Request, res: Response) => {
-    try {
-      res.status(201).json({ success: true, data: await service.createItem(getActor(req), req.body ?? {}) });
     } catch (error) { fail(res, error); }
   });
 
@@ -50,25 +45,34 @@ export function createNutritionRouter(service: NutritionInformation): Router {
     } catch (error) { fail(res, error); }
   });
 
-  router.post('/Nutrition/:kind/:name', async (req: Request, res: Response) => {
+  // ---------------- owner key required (anything that changes data) ----------------
+
+  // Create a menu item
+  router.post('/Menu', requireOwnerKey, async (req: Request, res: Response) => {
+    try {
+      res.status(201).json({ success: true, data: await service.createItem(ownerActor, req.body ?? {}) });
+    } catch (error) { fail(res, error); }
+  });
+
+  router.post('/Nutrition/:kind/:name', requireOwnerKey, async (req: Request, res: Response) => {
     try {
       const { facts, allergens } = req.body ?? {};
-      const item = await service.addNutrition(getActor(req), parseKind(String(req.params.kind)), String(req.params.name), facts, allergens);
+      const item = await service.addNutrition(ownerActor, parseKind(String(req.params.kind)), String(req.params.name), facts, allergens);
       res.status(201).json({ success: true, data: item });
     } catch (error) { fail(res, error); }
   });
 
-  router.put('/Nutrition/:kind/:name', async (req: Request, res: Response) => {
+  router.put('/Nutrition/:kind/:name', requireOwnerKey, async (req: Request, res: Response) => {
     try {
       const { facts, allergens } = req.body ?? {};
-      const item = await service.updateNutrition(getActor(req), parseKind(String(req.params.kind)), String(req.params.name), facts, allergens);
+      const item = await service.updateNutrition(ownerActor, parseKind(String(req.params.kind)), String(req.params.name), facts, allergens);
       res.status(200).json({ success: true, data: item });
     } catch (error) { fail(res, error); }
   });
 
-  router.delete('/Nutrition/:kind/:name', async (req: Request, res: Response) => {
+  router.delete('/Nutrition/:kind/:name', requireOwnerKey, async (req: Request, res: Response) => {
     try {
-      await service.removeNutrition(getActor(req), parseKind(String(req.params.kind)), String(req.params.name));
+      await service.removeNutrition(ownerActor, parseKind(String(req.params.kind)), String(req.params.name));
       res.status(204).send();
     } catch (error) { fail(res, error); }
   });
