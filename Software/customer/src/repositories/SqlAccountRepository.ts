@@ -36,6 +36,19 @@ export class SqlAccountRepository implements IChefRepo, ICustomerRepo {
         return data.customerPassword;
     }
 
+    // Returns null when there is no such customer (unlike GetCustomerPassword, which throws).
+    async FindCustomerPassword(customerID: string): Promise<string | null> {
+        const { data, error } = await supabase
+            .from("Customer")
+            .select("customerPassword")
+            .eq("customerID", customerID)
+            .maybeSingle();
+        if (error) {
+            throw new Error(`Failed to look up customer: ${error.message}`);
+        }
+        return data ? data.customerPassword : null;
+    }
+
     async ChangeCustomerPassword(customerID: string, newPassword: string): Promise<void> {
         const { error } = await supabase
             .from("Customer")
@@ -58,7 +71,7 @@ export class SqlAccountRepository implements IChefRepo, ICustomerRepo {
         return data as customer;
     }
 
-    async EditCustomer(customerID: string, updatedCustomer: customer): Promise<void> {
+    async EditCustomer(customerID: string, updatedCustomer: Partial<customer>): Promise<void> {
         const { error } = await supabase
             .from("Customer")
             .update(updatedCustomer)
