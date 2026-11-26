@@ -184,7 +184,7 @@ export class OrderProcessing {
         // 2. StockManagement says whether the stock is there
         const reservations = await this.reserve(lines);
 
-        const placedAt = (this.deps.now?.() ?? new Date()).toISOString();
+        const placedAt = (this.deps.now?.() ?? new Date()).toLocaleString('sv-SE');
         const analysisId = `ORD-${Date.parse(placedAt)}-${orderNumber}`;
         const draft = {
             id: analysisId, date: placedAt,
