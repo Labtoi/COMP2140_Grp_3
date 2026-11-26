@@ -2,13 +2,23 @@ import { Pool } from 'pg';
 import { IStockRepository } from '../interfaces/IStockRepository';
 import { SqlDatabaseM } from '../models/SqlDatabaseM';
 
+// config/postgres.ts makes pg return DATE columns as plain "YYYY-MM-DD" text, but the rest of the code
+// (StockManagement, orders) works with Date objects and calls .getTime() on them. Turn the text into a Date
+// at local midnight, so the day never shifts when it is shown again.
+function toDate(value: unknown): Date | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (value instanceof Date) return value;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value));
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(String(value));
+}
+
 function toModel(row: any): SqlDatabaseM {
   return {
     itemID: row.item_id,
     itemName: row.item_name,
     itemQuantity: Number(row.item_quantity), // numeric comes back as a string
-    dateAdded: row.date_added,
-    expiryDate: row.expiry_date,
+    dateAdded: toDate(row.date_added) as Date,
+    expiryDate: toDate(row.expiry_date),
     type: row.type,
   };
 }

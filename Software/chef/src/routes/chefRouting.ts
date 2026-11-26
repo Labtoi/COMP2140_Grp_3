@@ -1,13 +1,14 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { IChefRepo } from '../interfaces/IChefRepo';
-import { INutritionRepository } from '../interfaces/INutritionRepository';
-import { IPreplistRepository } from '../interfaces/IPrepListRepository';
+import { IChefRepo } from '../../../shared/src/interfaces/IChefRepo';
+import { INutritionRepository } from '../../../shared/src/interfaces/INutritionRepository';
+import { IPreplistRepository } from '../../../shared/src/interfaces/IPrepListRepository';
 import {
   NutritionInformation, NotFoundError, UnauthorizedError, ValidationError, parseKind,
-} from '../mainClasses/NutritionInformation';
-import type { Actor, ItemKind } from '../mainClasses/NutritionInformation';
-import type { Prep } from '../models/MSModels';
+} from '../../../shared/src/mainClasses/NutritionInformation';
+import type { Actor, ItemKind } from '../../../shared/src/mainClasses/NutritionInformation';
+import type { Prep } from '../../../shared/src/models/MSModels';
 import { OwnerContact } from '../mainClasses/OwnerContact';
+import { OrderProcessing, OrderNotFoundError, OrderValidationError } from '../../../shared/src/mainClasses/OrderProcessing';
 import { ChefRequest, issueChefToken, loginThrottle, passwordsMatch, requireChef } from '../middleware/chefAuth';
 
 const text = (value: unknown, name: string): string => {
@@ -34,12 +35,14 @@ export function createChefRouter(
   service: NutritionInformation,
   menuRepo: INutritionRepository & IPreplistRepository,
   chefRepo: IChefRepo,
+  orders: OrderProcessing,
 ): Router {
   const router = Router();
 
   const fail = (res: Response, error: unknown) => {
     const message = (error as { message?: string })?.message ?? 'Unknown error';
-    if (error instanceof ValidationError) return res.status(400).json({ message });
+    if (error instanceof ValidationError || error instanceof OrderValidationError) return res.status(400).json({ message });
+    if (error instanceof OrderNotFoundError) return res.status(404).json({ message });
     if (error instanceof UnauthorizedError) return res.status(403).json({ message });
     if (error instanceof NotFoundError || isNotFound(error)) return res.status(404).json({ message });
     console.error(error);
@@ -96,6 +99,27 @@ export function createChefRouter(
     } catch (error) { fail(res, error); }
   };
   router.use('/Chef', requireChef, stillExists);
+
+  // ---------------- customer orders ----------------
+  // Every order a customer places is passed on here: what was ordered, and the prep tasks to do.
+  // (The same prep tasks are also saved to the prep database through IPreplistRepository.)
+  router.get('/Chef/Orders', (_req: Request, res: Response) => {
+    try {
+      res.set('Cache-Control', 'no-store');
+      res.status(200).json({ success: true, data: orders.preparing() });
+    } catch (error) { fail(res, error); }
+  });
+
+  // The chef finishes an order. The customer's page then shows "ready for pickup".
+  router.post('/Chef/Orders/:orderNumber/ready', async (req: Request, res: Response) => {
+    try {
+      const n = Number(req.params.orderNumber);
+      if (!Number.isInteger(n) || n < 1) throw new ValidationError('Order number must be a whole number.');
+      const chef = await chefRepo.GetChefByID(me(req));
+      res.set('Cache-Control', 'no-store');
+      res.status(200).json({ success: true, data: await orders.markReady(n, chef.chefName) });
+    } catch (error) { fail(res, error); }
+  });
 
   // ---------------- my account (IChefRepo) ----------------
   // Chefs cannot change their own password. They ask the owner, who sets it from the owner page.

@@ -16,6 +16,11 @@
   .tabs button { font-weight: bold; }
   .tabs button.active { background: #222; color: #fff; }
   .card { background: #f4f4f4; padding: 10px; white-space: pre-wrap; }
+  .order { border: 1px solid #ccc; padding: 8px 12px; margin: 10px 0; }
+  .order h3 { margin: 0 0 4px; }
+  .order ul { margin: 4px 0 8px; padding-left: 20px; }
+  .banner { background: #fff2cc; border: 2px solid #b08900; padding: 8px 12px; margin: 10px 0; font-weight: bold; }
+  .tabs .count { background: #b00020; color: #fff; border-radius: 10px; padding: 0 7px; margin-left: 4px; font-size: .85em; }
   .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0 10px; }
 </style>
 </head>
@@ -39,6 +44,7 @@
 
   <p id="who" class="muted"></p>
   <p class="tabs">
+    <button data-section="orders" id="ordersTab">Orders</button>
     <button data-section="account">My Account</button>
     <button data-section="menuSec">Menu Items</button>
     <button data-section="nutrition">Nutrition</button>
@@ -46,8 +52,17 @@
     <button id="lockBtn">Log out</button>
   </p>
 
+  <div id="newOrderBanner" class="banner hidden" role="alert"></div>
+
+  <!-- ================= CUSTOMER ORDERS ================= -->
+  <div id="orders">
+    <p class="muted">Orders from customers appear here by themselves. Press "Mark ready" when an order is finished: the customer is told it is ready for pickup.</p>
+    <p id="ordersMsg" class="error"></p>
+    <div id="orderList"></div>
+  </div>
+
   <!-- ================= MY ACCOUNT ================= -->
-  <div id="account">
+  <div id="account" class="hidden">
     <div id="acInfo" class="card"></div>
   </div>
 
@@ -239,7 +254,7 @@
   const outError = (e) => { $("out").className = "error"; $("out").textContent = e.message; };
 
   // ---------- sections and menus ----------
-  const SECTIONS = ["account", "menuSec", "nutrition", "prep"];
+  const SECTIONS = ["orders", "account", "menuSec", "nutrition", "prep"];
   const PANELS = [...document.querySelectorAll(".panel")].map((p) => p.id);
 
   function showPanel(name) {
@@ -252,7 +267,10 @@
     showPanel(null);
   }
   document.querySelectorAll("[data-section]").forEach((b) =>
-    b.addEventListener("click", () => showSection(b.dataset.section)));
+    b.addEventListener("click", () => {
+      showSection(b.dataset.section);
+      if (b.dataset.section === "orders") $("newOrderBanner").classList.add("hidden");
+    }));
 
   // Buttons that run straight away
   const instant = {
@@ -460,8 +478,73 @@
     await fillPrepNames();
   });
 
+
+  // ---------- customer orders ----------
+  const el = (tag, text, cls) => { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; };
+  const money = (n) => "$" + Number(n).toFixed(2);
+  let seenOrders = null;       // order numbers already shown; null until the first load
+  let ordersPoller = null;
+  let unseenNew = 0;
+
+  function renderOrders(list) {
+    const box = $("orderList"); box.replaceChildren();
+    if (!list.length) box.appendChild(el("p", "No orders waiting. New orders will appear here."));
+    list.forEach((o) => {
+      const card = el("div", undefined, "order");
+      const when = new Date(o.placedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      card.appendChild(el("h3", `Order #${o.orderNumber} - ${o.customerName} (${when})`));
+      const items = el("ul");
+      o.items.forEach((i) => items.appendChild(el("li", `${i.quantity} x ${i.name} (${i.kind})`)));
+      card.appendChild(items);
+      if (o.tasks.length) {
+        card.appendChild(el("div", "Prep:", "muted"));
+        const tasks = el("ul");
+        o.tasks.forEach((t) => tasks.appendChild(el("li", `${t.quantity} x ${t.ingredient} for ${t.dish}${t.steps ? " - " + t.steps : ""}`)));
+        card.appendChild(tasks);
+      }
+      const btn = el("button", "Mark ready"); btn.type = "button";
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        try {
+          await send("POST", `/Chef/Orders/${o.orderNumber}/ready`);
+          $("ordersMsg").textContent = "";
+          await loadOrders();
+        } catch (e) { btn.disabled = false; $("ordersMsg").textContent = e.message; }
+      });
+      card.appendChild(btn);
+      box.appendChild(card);
+    });
+  }
+
+  function updateOrderBadge(count) {
+    const tab = $("ordersTab"); tab.replaceChildren(document.createTextNode("Orders"));
+    if (count) tab.appendChild(el("span", String(count), "count"));
+    document.title = count ? `(${count}) Chef` : "Chef";
+  }
+
+  async function loadOrders() {
+    try {
+      const { data } = await api("/Chef/Orders");
+      const fresh = seenOrders ? data.filter((o) => !seenOrders.has(o.orderNumber)) : [];
+      seenOrders = new Set(data.map((o) => o.orderNumber));
+      renderOrders(data);
+      updateOrderBadge(data.length);
+      if (fresh.length) {
+        unseenNew += fresh.length;
+        const b = $("newOrderBanner");
+        b.textContent = "New order: " + fresh.map((o) => "#" + o.orderNumber).join(", ");
+        b.classList.remove("hidden");
+      }
+      $("ordersMsg").textContent = "";
+    } catch (e) { $("ordersMsg").textContent = e.message; }
+  }
+  $("newOrderBanner").addEventListener("click", () => { $("newOrderBanner").classList.add("hidden"); showSection("orders"); });
+  const startOrderPolling = () => { stopOrderPolling(); seenOrders = null; loadOrders(); ordersPoller = setInterval(loadOrders, 5000); };
+  const stopOrderPolling = () => { if (ordersPoller) clearInterval(ordersPoller); ordersPoller = null; };
+
   // ---------- login ----------
   function lock(message) {
+    stopOrderPolling();
     token = "";
     sessionStorage.removeItem("chefToken");
     $("app").classList.add("hidden");
@@ -482,7 +565,8 @@
       (contact.length ? contact.join("\n") : "Ask the owner for their contact details.");
     $("gate").classList.add("hidden");
     $("app").classList.remove("hidden");
-    showSection("account");
+    showSection("orders");
+    startOrderPolling();
   }
 
   $("gateForm").addEventListener("submit", async (ev) => {

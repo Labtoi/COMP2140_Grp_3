@@ -2,21 +2,24 @@ import { IAnalysisRepo } from '../interfaces/IAnalysisRepo';
 import { Analysis } from '../models/EverythingAnalysis';
 import { DateRange, ItemSales } from '../models/EverythingAnalysis';
 
+// Thrown when a request breaks an analysis rule (routes return 400).
 export class ValidationError extends Error {}
 export type AnalysisDraft = Pick<Analysis, 'id' | 'date' | 'meals' | 'sides'>;
 export type AnalysisInput = Analysis;
 
 
+// Sales analysis for "DatabaseA"; each accepted order is saved as one record.
 export class StockAnalysis {
   constructor(private readonly repo: IAnalysisRepo) {}
 
+  // Rejects bad dates (YYYY-MM-DD, start <= end, not in the future) or a limit outside 1-50.
   private checkRange(range: DateRange, limit: number): void {
     const ok = /^\d{4}-\d{2}-\d{2}$/;
     if (!ok.test(range.start) || !ok.test(range.end)) throw new ValidationError('dates must look like YYYY-MM-DD');
     if (range.start > range.end) throw new ValidationError('start date must not be after end date');
     
     const updatedYear = new Date().getFullYear();
-    const updatedMonth = new Date().getMonth() + 1; // getMonth() returns 0-11, so add 1 for 1-12
+    const updatedMonth = new Date().getMonth() + 1;
     const updatedDay = new Date().getDate();
 
     const year1 = Number(range.start.split('-')[0]);
@@ -25,6 +28,7 @@ export class StockAnalysis {
 
     const month1 = Number(range.start.split('-')[1]);
     const month2 = Number(range.end.split('-')[1]);
+    // NOTE: day1 reads the END date, and the future-date checks compare year, month and day separately.
     const day1 = Number(range.end.split('-')[2]);
     const day2 = Number(range.end.split('-')[2]);
     if (month1<1 || month1>12 || month2<1 || month2>12) throw new ValidationError('Start and end date months must be between 1 and 12.');
@@ -34,6 +38,7 @@ export class StockAnalysis {
     if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw new ValidationError('limit must be a whole number from 1 to 50');
   }
   
+  // Top / bottom sellers in a date range, up to `limit`.
   mostPopularMeals(range: DateRange, limit = 5): Promise<ItemSales[]> {
     this.checkRange(range, limit);
     return this.repo.MostPopularMeals(range, limit);
@@ -51,6 +56,7 @@ export class StockAnalysis {
     return this.repo.LeastPopularSides(range, limit);
   }
 
+  // Totals for a date range.
   totalMealsSold(range: DateRange): Promise<number> {
     this.checkRange(range, 1);
     return this.repo.TotalMealsSold(range);
@@ -66,6 +72,7 @@ export class StockAnalysis {
     return this.repo.TotalSidesSold(range);
   }
 
+  // Lookups of saved records.
   getAll(): Promise<Analysis[]> {
     return this.repo.GetAllAnalysis();
   }
@@ -82,10 +89,12 @@ export class StockAnalysis {
     return (await this.repo.GetAnalysis(id)) !== null;
   }
 
+  // Saves a complete record as given.
   async add(input: AnalysisInput): Promise<Analysis> {
     return this.repo.AddAnalysis(input);
   }
 
+  // Saves a sale from its items; works out meals sold, sides sold, total and revenue.
   async addFromItems(draft: AnalysisDraft): Promise<Analysis> {
     const items = [...draft.meals, ...draft.sides];
     if (items.some((i) => !Number.isFinite(i.price) || !Number.isFinite(i.quantity) || i.price < 0 || i.quantity < 0)) {
@@ -102,10 +111,11 @@ export class StockAnalysis {
       mealsSold,
       sidesSold,
       totalSold: mealsSold + sidesSold,
-      revenue: Math.round(revenue * 100) / 100,   // avoids floating-point noise like 38.970000000000006
+      revenue: Math.round(revenue * 100) / 100,
     });
   }
 
+  // Deletes a record (also used to undo a failed order).
   remove(id: string): Promise<void> {
     return this.repo.RemoveAnalysis(id);
   } 

@@ -16,6 +16,18 @@
   .tabs button { font-weight: bold; }
   .tabs button.active { background: #222; color: #fff; }
   .card { border: 1px solid #ccc; padding: 10px 14px; margin: 12px 0; }
+  .item { border: 1px solid #ccc; padding: 8px 12px; margin: 8px 0; }
+  .item.soldout { opacity: .6; }
+  .item h4 { margin: 0 0 4px; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: .85em; background: #eee; margin-right: 4px; }
+  .badge.warn { background: #ffe0e0; color: #8a0014; font-weight: bold; }
+  .badge.na { background: #fff2cc; }
+  .qty { width: 4em; display: inline-block; }
+  .weight { width: 6em; display: inline-block; }
+  .nut { font-size: .9em; margin: 4px 0; }
+  .banner { background: #e3f6e8; border: 2px solid #1b6e2d; color: #114d1f; padding: 10px 14px; margin: 12px 0; font-weight: bold; }
+  table.cart { border-collapse: collapse; width: 100%; }
+  table.cart td, table.cart th { border-bottom: 1px solid #ddd; padding: 4px 6px; text-align: left; }
 </style>
 </head>
 <body>
@@ -54,12 +66,45 @@
 <div id="app" class="hidden">
 
   <p class="tabs">
-    <button data-menu="mView">1) My Account</button>
-    <button data-menu="mEdit">2) Edit Info</button>
-    <button data-menu="mPw">3) Change Password</button>
-    <button data-menu="mDelete">4) Delete Account</button>
+    <button data-menu="mMenu">1) Menu &amp; Order</button>
+    <button data-menu="mOrders">2) My Orders</button>
+    <button data-menu="mView">3) My Account</button>
+    <button data-menu="mEdit">4) Edit Info</button>
+    <button data-menu="mPw">5) Change Password</button>
+    <button data-menu="mDelete">6) Delete Account</button>
     <button id="logoutBtn">Log Out</button>
   </p>
+
+  <div id="pickupBanner" class="banner hidden" role="alert"></div>
+
+  <!-- ===== menu, nutrition, allergens, cart ===== -->
+  <div id="mMenu" class="hidden panel">
+    <p id="menuMsg"></p>
+    <h3>Meals</h3>
+    <div id="mealList"></div>
+    <h3>Sides</h3>
+    <div id="sideList"></div>
+
+    <div class="card">
+      <h3>Your order</h3>
+      <p id="cartEmpty">Nothing yet. Choose items above.</p>
+      <table id="cartTable" class="cart hidden">
+        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th></th></tr></thead>
+        <tbody id="cartBody"></tbody>
+      </table>
+      <p>Total: <b id="cartTotal">$0.00</b></p>
+      <button id="placeBtn" type="button" disabled>Place Order</button>
+      <button id="cancelBtn" type="button" class="hidden">Cancel</button>
+      <span id="countdown"></span>
+      <p id="orderMsg"></p>
+    </div>
+  </div>
+
+  <!-- ===== my orders ===== -->
+  <div id="mOrders" class="hidden panel">
+    <p id="ordersMsg"></p>
+    <div id="orderList"></div>
+  </div>
 
   <form id="mEdit" class="hidden panel" autocomplete="off">
     <p>Your customer ID (<b class="myId"></b>) can't be changed.</p>
@@ -129,6 +174,182 @@
   $("tabLogin").addEventListener("click", () => showGateTab("login"));
   $("tabSignup").addEventListener("click", () => showGateTab("signup"));
 
+
+  // ---------- menu, nutrition, allergens ----------
+  const money = (n) => "$" + Number(n).toFixed(2);
+  const el = (tag, text, cls) => { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; };
+  const cart = new Map(); // "meal:Name" -> { kind, name, price, quantity }
+  const MAX_QTY = 10;
+  let menuData = null;
+
+  function nutritionText(n) {
+    if (!n.available) return n.message || "Nutritional information not available";
+    return `${n.weightG ?? 100} g: ${n.calories} kcal, protein ${n.proteinG} g, carbs ${n.carbohydratesG} g, fat ${n.fatsG} g, sodium ${n.sodiumMg} mg, vitamins ${n.vitamins}`;
+  }
+
+  function renderItem(kind, it) {
+    const box = el("div", undefined, "item" + (it.available ? "" : " soldout"));
+    box.appendChild(el("h4", `${it.name} - ${money(it.price)}`));
+    if (it.details) box.appendChild(el("div", it.details));
+
+    const al = el("div");
+    al.appendChild(el("span", "Allergens: ", ""));
+    if (it.allergens.length) it.allergens.forEach((a) => al.appendChild(el("span", a, "badge")));
+    else al.appendChild(el("span", it.nutrition.allergens || "Allergen information not available", "badge na"));
+    box.appendChild(al);
+    if (it.allergyWarning.length) box.appendChild(el("div", "Contains your allergy: " + it.allergyWarning.join(", ") + ". Cannot be ordered.", "badge warn"));
+
+    const nut = el("div", nutritionText(it.nutrition), "nut" + (it.nutrition.available ? "" : " na"));
+    box.appendChild(nut);
+
+    // nutrition for a chosen portion (grams)
+    const w = el("input"); w.type = "number"; w.min = "1"; w.max = "5000"; w.placeholder = "grams"; w.className = "weight";
+    const wb = el("button", "Show for this weight"); wb.type = "button";
+    wb.addEventListener("click", async () => {
+      try {
+        const r = await api(`/Menu/${kind}/${encodeURIComponent(it.name)}?weight=${encodeURIComponent(w.value)}`);
+        nut.textContent = nutritionText(r.data);
+      } catch (e) { nut.textContent = e.message; }
+    });
+    if (it.nutrition.available) { box.appendChild(w); box.appendChild(wb); }
+
+    const row = el("div");
+    if (!it.available) row.appendChild(el("span", "Currently unavailable", "badge warn"));
+    else if (!it.allergyWarning.length) {
+      const q = el("input"); q.type = "number"; q.min = "1"; q.max = String(MAX_QTY); q.value = "1"; q.className = "qty";
+      const add = el("button", "Add to order"); add.type = "button";
+      add.addEventListener("click", () => addToCart(kind, it, Number(q.value)));
+      row.appendChild(q); row.appendChild(add);
+    }
+    box.appendChild(row);
+    return box;
+  }
+
+  async function loadMenu() {
+    $("menuMsg").textContent = "Loading menu...";
+    try {
+      menuData = (await api("/Menu")).data;
+      $("menuMsg").textContent = "";
+      for (const [id, kind, items] of [["mealList", "meal", menuData.meals], ["sideList", "side", menuData.sides]]) {
+        const box = $(id); box.replaceChildren();
+        if (!items.length) box.appendChild(el("p", "None available."));
+        items.forEach((it) => box.appendChild(renderItem(kind, it)));
+      }
+      // drop anything from the cart that can no longer be ordered
+      for (const [key, c] of cart) {
+        const it = (c.kind === "meal" ? menuData.meals : menuData.sides).find((x) => x.name === c.name);
+        if (!it || !it.available || it.allergyWarning.length) cart.delete(key);
+      }
+      renderCart();
+    } catch (e) { $("menuMsg").className = "error"; $("menuMsg").textContent = e.message; }
+  }
+
+  // ---------- cart ----------
+  function addToCart(kind, it, qty) {
+    if (!Number.isInteger(qty) || qty < 1) return setOrderMsg("Quantity must be a whole number of 1 or more.", true);
+    const key = kind + ":" + it.name;
+    const total = (cart.get(key)?.quantity || 0) + qty;
+    if (total > MAX_QTY) return setOrderMsg(`You can order at most ${MAX_QTY} of any one item.`, true);
+    cart.set(key, { kind, name: it.name, price: it.price, quantity: total });
+    setOrderMsg("");
+    renderCart();
+  }
+  function setOrderMsg(text, isError = false) { $("orderMsg").className = isError ? "error" : "ok"; $("orderMsg").textContent = text; }
+
+  function renderCart() {
+    const body = $("cartBody"); body.replaceChildren();
+    let cents = 0;
+    for (const [key, c] of cart) {
+      cents += Math.round(c.price * 100) * c.quantity;
+      const tr = el("tr");
+      tr.appendChild(el("td", `${c.name} (${c.kind})`));
+      tr.appendChild(el("td", String(c.quantity)));
+      tr.appendChild(el("td", money(c.price * c.quantity)));
+      const td = el("td"); const rm = el("button", "Remove"); rm.type = "button";
+      rm.addEventListener("click", () => { cart.delete(key); renderCart(); });
+      td.appendChild(rm); tr.appendChild(td); body.appendChild(tr);
+    }
+    $("cartTotal").textContent = money(cents / 100);
+    $("cartTable").classList.toggle("hidden", !cart.size);
+    $("cartEmpty").classList.toggle("hidden", !!cart.size);
+    $("placeBtn").disabled = !cart.size || !!pending;
+  }
+
+  // ---------- place order: 10 second window to cancel (SR-2) ----------
+  let pending = null;
+  $("placeBtn").addEventListener("click", () => {
+    if (!cart.size || pending) return;
+    let left = 10;
+    $("cancelBtn").classList.remove("hidden");
+    $("placeBtn").disabled = true;
+    const tick = () => { $("countdown").textContent = ` Sending in ${left}s - press Cancel to stop.`; };
+    tick();
+    pending = setInterval(async () => {
+      left -= 1;
+      if (left > 0) return tick();
+      endCountdown();
+      await sendOrder();
+    }, 1000);
+  });
+  function endCountdown() {
+    clearInterval(pending); pending = null;
+    $("countdown").textContent = "";
+    $("cancelBtn").classList.add("hidden");
+    renderCart();
+  }
+  $("cancelBtn").addEventListener("click", () => { endCountdown(); setOrderMsg("Order cancelled. Nothing was ordered."); });
+
+  async function sendOrder() {
+    const items = [...cart.values()].map((c) => ({ kind: c.kind, name: c.name, quantity: c.quantity }));
+    try {
+      const { data } = await post("/Orders", { items });
+      cart.clear(); renderCart();
+      setOrderMsg(`Order #${data.orderNumber} placed. Total ${money(data.total)}. We'll tell you here when it's ready.`);
+      checkOrders();
+    } catch (e) {
+      setOrderMsg(e.message, true); // a denied order says which dishes can't be made; nothing was taken
+      loadMenu();
+    }
+  }
+
+  // ---------- my orders + pickup notification ----------
+  async function checkOrders() {
+    try {
+      const { data } = await api("/Orders/mine");
+      const b = $("pickupBanner");
+      const ready = data.orders.filter((o) => o.status === "ready");
+      b.classList.toggle("hidden", !data.readyForPickup);
+      b.textContent = data.readyForPickup
+        ? "Ready for pickup: " + ready.map((o) => "order #" + o.orderNumber).join(", ")
+        : "";
+      renderOrders(data.orders);
+    } catch (e) { /* a 401 already sent the user to the log-in page */ }
+  }
+
+  function renderOrders(orders) {
+    const box = $("orderList"); box.replaceChildren();
+    if (!orders.length) box.appendChild(el("p", "You have no orders yet."));
+    orders.forEach((o) => {
+      const card = el("div", undefined, "item");
+      card.appendChild(el("h4", `Order #${o.orderNumber} - ${o.status === "preparing" ? "being prepared" : o.status === "ready" ? "READY FOR PICKUP" : "collected"}`));
+      o.items.forEach((i) => card.appendChild(el("div", `${i.quantity} x ${i.name} (${i.kind}) - ${money(i.lineTotal)}`)));
+      card.appendChild(el("div", "Total: " + money(o.total)));
+      if (o.status === "ready") {
+        const c = el("button", "I've collected it"); c.type = "button";
+        c.addEventListener("click", async () => {
+          try { await post(`/Orders/${o.orderNumber}/collected`, {}); checkOrders(); }
+          catch (e) { $("ordersMsg").className = "error"; $("ordersMsg").textContent = e.message; }
+        });
+        card.appendChild(c);
+      }
+      box.appendChild(card);
+    });
+  }
+
+  let poller = null;
+  const startPolling = () => { stopPolling(); checkOrders(); poller = setInterval(checkOrders, 5000); };
+  const stopPolling = () => { if (poller) clearInterval(poller); poller = null; };
+
   // ---------- menu / panels ----------
   const PANELS = [...document.querySelectorAll(".panel")].map((p) => p.id);
   function showPanel(name) {
@@ -147,6 +368,8 @@
     btn.addEventListener("click", async () => {
       const m = btn.dataset.menu;
       try {
+        if (m === "mMenu") { showPanel(m); await loadMenu(); return; }
+        if (m === "mOrders") { showPanel(m); await checkOrders(); return; }
         if (m === "mView") { showPanel(null); btn.classList.add("active"); out(fmtMe(await loadMe())); return; }
         showPanel(m);
         await loadMe();
@@ -198,11 +421,16 @@
     document.querySelectorAll(".myId").forEach((s) => (s.textContent = me.customerID));
     $("gate").classList.add("hidden");
     $("app").classList.remove("hidden");
-    showPanel(null);
-    out(`Welcome, ${me.customerName}!\n\n` + fmtMe(me));
+    showPanel("mMenu");
+    loadMenu();
+    startPolling();
   }
 
   function lock(message) {
+    stopPolling();
+    if (pending) endCountdown();
+    cart.clear(); renderCart();
+    $("pickupBanner").classList.add("hidden");
     token = "";
     me = null;
     sessionStorage.removeItem("customerToken");

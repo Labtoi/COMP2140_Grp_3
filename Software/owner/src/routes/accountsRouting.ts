@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { IChefRepo } from '../interfaces/IChefRepo';
-import { chef, customer } from '../models/accountsModels';
+import { IChefRepo } from '../../../shared/src/interfaces/IChefRepo';
+import { chef, customer } from '../../../shared/src/models/accountsModels';
 import { requireOwnerKey } from '../middleware/ownerAuth';
 
 class AccountValidationError extends Error {}

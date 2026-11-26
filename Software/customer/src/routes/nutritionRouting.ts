@@ -1,10 +1,9 @@
 import { Router, Request, Response } from 'express';
 import {
   NutritionInformation, NotFoundError, UnauthorizedError, ValidationError, parseKind,
-} from '../mainClasses/NutritionInformation';
-import type { Actor } from '../mainClasses/NutritionInformation';
-// PLACEHOLDER until the Authentication & Authorization component exists (DC-7):
-// the browser sends "x-role: chef". This is NOT secure and must be replaced by real login/sessions.
+} from '../../../shared/src/mainClasses/NutritionInformation';
+import type { Actor } from '../../../shared/src/mainClasses/NutritionInformation';
+
 function getActor(req: Request): Actor {
   const role = req.header('x-role');
   return role === 'chef' || role === 'owner' ? { id: role, role } : { id: 'guest', role: 'customer' };

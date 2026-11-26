@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { NutritionInformation } from '../mainClasses/NutritionInformation';
-import type { Actor, MenuEntry, NutritionView } from '../mainClasses/NutritionInformation';
+import { NutritionInformation } from '../../../shared/src/mainClasses/NutritionInformation';
+import type { Actor, MenuEntry, NutritionView } from '../../../shared/src/mainClasses/NutritionInformation';
 import { requireOwnerKey } from '../middleware/ownerAuth';
 
 // The owner key (checked below) is what proves this is the owner. We do NOT use the

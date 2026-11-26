@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { ICustomerRepo } from '../interfaces/ICustomerRepo.js';
-import { customer, preferences } from '../models/accountsModels.js';
+import { customer, preferences } from '../../../shared/src/models/accountsModels.js';
 import {
   AuthedRequest, requireCustomerSession, createSession, endSession, endSessionsFor,
   attemptKey, isLocked, recordFailure, clearFailures,
