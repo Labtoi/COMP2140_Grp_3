@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Pool, types } from 'pg';
 
-types.setTypeParser(1082, (value) => value);
+types.setTypeParser(1114, (value) => value);
 
 if (!process.env.DATABASE_URL) {
   console.error('Missing DATABASE_URL in .env');
