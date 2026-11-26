@@ -256,7 +256,7 @@ export class OrderProcessing {
             if (r.status !== 'preparing') throw new OrderValidationError(`Order #${orderNumber} is already ${r.status}.`);
             for (const name of r.taskNames) await this.deps.prepRepo.removePrep(name); // a failure here leaves the order as it was, so it can be retried
             r.status = 'ready';
-            r.readyAt = (this.deps.now?.() ?? new Date()).toISOString();
+            r.readyAt = (this.deps.now?.() ?? new Date()).toLocaleString('sv-SE');
             r.readyBy = chefName;
             const customer = this.customers.get(r.customerID);
             customer?.OrderReady(chefName, customer.realName, r.order);
